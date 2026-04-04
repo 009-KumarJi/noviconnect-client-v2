@@ -40,9 +40,7 @@ const App = () => {
     if (!user?._id) return;
 
     ensureUserEncryptionSetup({user, server})
-      .then((updatedUser) => {
-        if (updatedUser) dispatch(userExists(updatedUser));
-      })
+      .then(() => null)
       .catch(() => null);
   }, [dispatch, user?._id]);
 

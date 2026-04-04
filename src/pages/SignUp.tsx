@@ -26,6 +26,7 @@ import {userExists} from "../redux/reducers/authSlice.js";
 import {capitalizeFirstLetter} from "../utils/helper.js";
 import {GoogleLogin} from "@react-oauth/google";
 import {userTheme} from "../constants/userTheme.constant.js";
+import {ensureUserEncryptionSetup} from "../lib/e2ee";
 
 const SignUpForm = () => {
   const firstName = useInputValidation("");
@@ -151,6 +152,11 @@ const SignUpForm = () => {
         headers: {"Content-Type": "multipart/form-data"},
       });
       dispatch(userExists(data.user));
+      await ensureUserEncryptionSetup({
+        user: data.user,
+        server,
+        password: password.value,
+      });
       toast.success(data.message);
       navigate("/", {replace: true});
     } catch (error: any) {

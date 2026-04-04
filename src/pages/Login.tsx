@@ -8,6 +8,7 @@ import {userExists} from "../redux/reducers/authSlice.js";
 import {useDispatch} from "react-redux";
 import toast from "react-hot-toast";
 import {userTheme} from "../constants/userTheme.constant.js";
+import {ensureUserEncryptionSetup} from "../lib/e2ee";
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -26,6 +27,11 @@ const Login = () => {
       );
       toast.success(data.message);
       dispatch(userExists(data.user));
+      await ensureUserEncryptionSetup({
+        user: data.user,
+        server,
+        password: password.value,
+      });
       navigate("/", {replace: true});
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Something went wrong!");

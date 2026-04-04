@@ -21,6 +21,7 @@ import {resetStore} from "../../redux/resetActions.js";
 import {getSocket} from "../../socket.jsx";
 import apiSlice from "../../redux/api/apiSlice.js";
 import {userTheme} from "../../constants/userTheme.constant.js";
+import {clearEncryptionIdentity} from "../../lib/e2ee";
 
 
 const SearchDialog = lazy(() => import("../specific/Search.jsx"));
@@ -35,6 +36,7 @@ const Header = () => {
 
   const {isSearch, isNewGroup, isNotification} = useSelector(state => state["misc"]);
   const {notificationCount} = useSelector(state => state["chat"]);
+  const {user} = useSelector(state => state["auth"]);
 
   const handleMobile = () => dispatch(setIsMobileMenu(true));
   const openSearch = () => dispatch(setIsSearch(true));
@@ -51,6 +53,7 @@ const Header = () => {
 
     try {
       const res = await axios.get(`${server}/api/v1/user/logout`, {withCredentials: true});
+      clearEncryptionIdentity(user?._id);
       dispatch(apiSlice.util.resetApiState());
       dispatch(resetStore());
       dispatch(userDoesNotExist());

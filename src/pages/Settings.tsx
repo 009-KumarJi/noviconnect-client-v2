@@ -10,6 +10,7 @@ import {userDoesNotExist, userExists} from "../redux/reducers/authSlice.js";
 import {resetStore} from "../redux/resetActions.js";
 import apiSlice from "../redux/api/apiSlice.js";
 import {useNavigate} from "react-router-dom";
+import {clearEncryptionIdentity, rewrapEncryptionBundle} from "../lib/e2ee";
 
 const Settings = () => {
   const {user} = useSelector((state: any) => state.auth);
@@ -80,6 +81,12 @@ const Settings = () => {
     setIsLoading(true);
     try {
       const {data} = await axios.patch(`${server}/api/v1/user/password`, passwords, {withCredentials: true});
+      await rewrapEncryptionBundle({
+        userId: user?._id,
+        currentPassword: passwords.currentPassword,
+        newPassword: passwords.newPassword,
+        server,
+      });
       setPasswords({currentPassword: "", newPassword: ""});
       toast.success(data.message);
     } catch (error: any) {
@@ -94,6 +101,7 @@ const Settings = () => {
     setIsLoading(true);
     try {
       const {data} = await axios.delete(`${server}/api/v1/user/delete-account`, {withCredentials: true});
+      clearEncryptionIdentity(user?._id);
       dispatch(apiSlice.util.resetApiState());
       dispatch(resetStore());
       dispatch(userDoesNotExist());
