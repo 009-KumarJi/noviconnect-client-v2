@@ -1,75 +1,70 @@
-# React + TypeScript + Vite
+# NoviConnect Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend for NoviConnect, a dark-themed real-time chat application with Google auth, OTP-based account flows, KrishnaDen admin routes, and end-to-end encrypted messaging.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19
+- Vite
+- Redux Toolkit / RTK Query
+- Material UI
+- Socket.IO client
+- Web Crypto API for E2EE
 
-## React Compiler
+## Features
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+- User auth, signup, login, forgot password, and OTP verification
+- Google sign-in support
+- Direct chats and group chats
+- End-to-end encrypted text messages
+- End-to-end encrypted attachments
+- Password-backed key recovery and recovery-key flows
+- KrishnaDen admin interface
 
-Note: This will impact Vite dev & build performances.
+## Environment Variables
 
-## Expanding the ESLint configuration
+Copy values from [`dummy.env`](c:/Users/krish/Desktop/noviconnect-latest/new-client/dummy.env).
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_SERVER=
+VITE_GOOGLE_CLIENT_ID=
+VITE_MODE=development
+VITE_E2EE_ENABLED=true
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run preview
+npm run audit:e2ee
 ```
+
+## Local Development
+
+```bash
+npm install
+npm run dev
+```
+
+The app expects the backend to be running and `VITE_SERVER` to point to it.
+
+## E2EE Notes
+
+- New secure messages are encrypted in the browser before they are sent.
+- Message decryption happens only on the client.
+- Private keys are protected with password-based wrapping and recovery flows.
+- `VITE_E2EE_ENABLED` can be used to gate the secure messaging rollout.
+
+For implementation details, see:
+
+- [`implementaation-plan-e2ee.md`](c:/Users/krish/Desktop/noviconnect-latest/implementaation-plan-e2ee.md)
+- [`e2ee-manual-checklist.md`](c:/Users/krish/Desktop/noviconnect-latest/e2ee-manual-checklist.md)
+
+## Deployment
+
+- Set the required frontend env vars in Vercel.
+- Ensure the backend CORS allowlist includes the deployed frontend origin.
+- For direct-route support on Vercel, keep [`vercel.json`](c:/Users/krish/Desktop/noviconnect-latest/new-client/vercel.json) deployed with the client.
