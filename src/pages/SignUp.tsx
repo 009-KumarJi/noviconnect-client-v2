@@ -93,12 +93,20 @@ const SignUpForm = () => {
     if (!email.value) return toast.error("Please enter your email first.");
     setIsLoading(true);
     try {
-      await axios.post(`${server}/api/v1/user/send-signup-otp`, {email: email.value});
+      await axios.post(
+        `${server}/api/v1/user/send-signup-otp`,
+        {email: email.value},
+        {timeout: 15000}
+      );
       toast.success("OTP sent to your email!");
       setOtpSent(true);
       setShowOtpModal(true);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to send OTP");
+      const message =
+        error?.code === "ECONNABORTED"
+          ? "OTP request timed out. Please check the mail server config and try again."
+          : error?.response?.data?.message || "Failed to send OTP";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
