@@ -7,9 +7,16 @@ export const useInputValidation = (initValue: string, validator?: (val: string) 
   const changeHandler = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setValue(e.target.value);
     if (validator) {
-      const { isValid, errorMessage } = validator(e.target.value);
-      if (!isValid) setError(errorMessage);
-      else setError(null);
+      const result: any = validator(e.target.value);
+      if (result === undefined || result === null || result === true || result?.isValid === true) {
+        setError(null);
+      } else if (typeof result === 'string') {
+        setError(result);
+      } else if (result?.errorMessage) {
+        setError(result.errorMessage);
+      } else {
+        setError("Invalid input");
+      }
     }
   };
   return { value, changeHandler, error };

@@ -18,6 +18,7 @@ import {userDoesNotExist} from "../../redux/reducers/authSlice.js";
 import {setIsMobileMenu, setIsNewGroup, setIsNotification, setIsSearch} from "../../redux/reducers/miscSlice.js";
 import {resetNotificationCount} from "../../redux/reducers/chatSlice.js";
 import {resetStore} from "../../redux/resetActions.js";
+import {getSocket} from "../../socket.jsx";
 
 
 const SearchDialog = lazy(() => import("../specific/Search.jsx"));
@@ -28,6 +29,7 @@ const Header = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const socket = getSocket();
 
   const {isSearch, isNewGroup, isNotification} = useSelector(state => state["misc"]);
   const {notificationCount} = useSelector(state => state["chat"]);
@@ -42,6 +44,8 @@ const Header = () => {
   const navigateToGroup = () => navigate("/groups");
 
   const logoutHandler = () => {
+    if (socket) (socket as any).disconnect();
+
     axios
       .get(`${server}/api/v1/user/logout`, {withCredentials: true})
       .then(res => {

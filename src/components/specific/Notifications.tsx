@@ -14,7 +14,8 @@ const Notifications = () => {
   const {isLoading, data, error, isError, refetch} = useGetNotificationsQuery();
   useErrors([{isError, error}]);
 
-  const [friendRequest] = useAsyncMutation(useAcceptFriendRequestMutation);
+  const [acceptRequestHook] = useAcceptFriendRequestMutation();
+  const [friendRequest] = useAsyncMutation(acceptRequestHook);
 
   const notificationCloseHandler = () => dispatch(setIsNotification(false));
   const friendRequestHandler = async (requestId, status) => {

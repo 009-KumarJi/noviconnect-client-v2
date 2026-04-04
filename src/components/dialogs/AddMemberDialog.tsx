@@ -25,7 +25,8 @@ const AddMemberDialog = ({ChatId}) => {
   const [selectedMembers, setSelectedMembers] = useState([]);
 
   const {isAddMember} = useSelector(state => state['misc']);
-  const [addMembers, isLoadingAddMembers] = useAsyncMutation(useAddMembersMutation);
+  const [addMembersHook] = useAddMembersMutation();
+  const [addMembers, isLoadingAddMembers] = useAsyncMutation(addMembersHook);
 
   const {isLoading, data, isError, error} = useAvailableFriendsQuery(ChatId);
   sout("Available Friends: ", data);

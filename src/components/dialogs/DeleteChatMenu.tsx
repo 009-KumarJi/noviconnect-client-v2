@@ -11,8 +11,11 @@ const DeleteChatMenu = ({dispatch, deleteMenuAnchor}) => {
   const navigate = useNavigate();
   const {isDeleteMenu, selectedDeleteChat} = useSelector(state => state['misc']);
 
-  const [deleteChat, _, deleteChatData] = useAsyncMutation(useDeleteGroupChatMutation);
-  const [leaveGroup, __, leaveGroupData] = useAsyncMutation(useLeaveGroupMutation);
+  const [deleteGroupChatHook] = useDeleteGroupChatMutation();
+  const [leaveGroupHook] = useLeaveGroupMutation();
+
+  const [deleteChat, _, deleteChatData] = useAsyncMutation(deleteGroupChatHook);
+  const [leaveGroup, __, leaveGroupData] = useAsyncMutation(leaveGroupHook);
 
   const closeHandler = () => dispatch(setIsDeleteMenu(false));
 

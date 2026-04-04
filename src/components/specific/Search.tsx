@@ -20,7 +20,8 @@ const Search = () => {
 
   const [searchUser] = useLazySearchUserQuery();
 
-  const [sendFriendRequest, isLoadingSFRequest] = useAsyncMutation(useSendFriendRequestMutation);
+  const [sendFriendRequestHook] = useSendFriendRequestMutation();
+  const [sendFriendRequest, isLoadingSFRequest] = useAsyncMutation(sendFriendRequestHook);
 
   useEffect(() => {
 

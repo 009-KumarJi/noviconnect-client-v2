@@ -56,11 +56,13 @@ const Groups = () => {
   );
   sout("groupName: ", groupDetails?.data?.chat?.name);
 
-  const [renameGroup, isLoadingRenaming] = useAsyncMutation(useRenameGroupChatMutation);
+  const [renameGroupChatHook] = useRenameGroupChatMutation();
+  const [removeMemberHook] = useRemoveMemberMutation();
+  const [deleteGroupChatHook] = useDeleteGroupChatMutation();
 
-  const [removeMember, isLoadingRemoveMember] = useAsyncMutation(useRemoveMemberMutation);
-
-  const [deleteGC, isLoadingDeleteGC] = useAsyncMutation(useDeleteGroupChatMutation);
+  const [renameGroup, isLoadingRenaming] = useAsyncMutation(renameGroupChatHook);
+  const [removeMember, isLoadingRemoveMember] = useAsyncMutation(removeMemberHook);
+  const [deleteGC, isLoadingDeleteGC] = useAsyncMutation(deleteGroupChatHook);
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
@@ -224,12 +226,12 @@ const Groups = () => {
   return myGroups?.isLoading ? <LayoutLoader/> : (
     <Grid container={true} height={"100vh"}>
       <Grid
-        item={true} sm={4}
+        size={{ sm: 4 }}
         sx={{display: {xs: "none", sm: "block"}}}
       >
         <GroupsList myGroups={myGroups?.data?.groups} ChatId={ChatId}/>
       </Grid>
-      <Grid item={true} xs={12} sm={8} sx={{
+      <Grid size={{ xs: 12, sm: 8 }} sx={{
         display: "flex",
         alignItems: "center",
         flexDirection: "column",

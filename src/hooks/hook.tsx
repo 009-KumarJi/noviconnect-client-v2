@@ -14,11 +14,9 @@ const useErrors = (errors = []) => {
   }, [errors]);
 }
 
-const useAsyncMutation = (mutationHook) => {
+const useAsyncMutation = (mutate) => {
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState(null);
-
-  const [mutate] = mutationHook();
 
   const executeMutation = async (toastMessage, ...args) => {
     setIsLoading(true);
@@ -44,10 +42,8 @@ const useAsyncMutation = (mutationHook) => {
 }
 
 const useSockets = (socket, handlers) => {
-  // Guard clause to handle missing parameters
-  if (!socket || !handlers) return;
-
   useEffect(() => {
+    if (!socket || !handlers) return;
     // Set up event listeners when component mounts
     Object.entries(handlers).forEach(([event, handler]) => {
       sout(`Listening for event: ${event}`);
@@ -61,7 +57,7 @@ const useSockets = (socket, handlers) => {
         socket.off(event, handler);
       });
     };
-  }, [socket, handlers]); // Dependency array ensures effect runs only when socket or handlers change
+  }, [socket]); // handlers intentionally excluded — object identity changes every render but callbacks are stable via useCallback
 };
 
 export {useErrors, useAsyncMutation, useSockets};

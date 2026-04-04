@@ -126,8 +126,7 @@ const AdminLayout = ({children}) => {
       </Box>
 
       <Grid
-        item
-        md={4} lg={3}
+        size={{ md: 4, lg: 3 }}
         sx={{
           display: {xs: "none", md: "block"},
           bgcolor: 'rgba(9,9,44,1)'
@@ -136,7 +135,7 @@ const AdminLayout = ({children}) => {
         <SideBar/>
       </Grid>
 
-      <Grid item xs={12} md={8} lg={9} sx={{bgcolor: 'rgb(17,0,49)'}}>
+      <Grid size={{ xs: 12, md: 8, lg: 9 }} sx={{bgcolor: 'rgb(17,0,49)'}}>
         {children}
       </Grid>
 

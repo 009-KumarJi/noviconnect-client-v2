@@ -12,10 +12,10 @@ import {setIsDeleteMenu, setIsMobileMenu, setSelectedDeleteChat} from "../../red
 import {useErrors, useSockets} from "../../hooks/hook.jsx";
 import {getSocket} from "../../socket.jsx";
 import {
+  GET_ONLINE_USERS,
   NEW_MESSAGE_ALERT,
   NEW_REQUEST,
   ONLINE_USERS,
-  ONLINE_USERS_LIST,
   REFETCH_CHATS
 } from "../../constants/events.constant.js";
 import {incrementNotificationCount, setNewMessagesAlert} from "../../redux/reducers/chatSlice.js";
@@ -36,9 +36,8 @@ const AppLayout = () => (WrappedComponent) => {
 
     const onlineUsersListener = useCallback((data) => {
       sout("Online Users: ", data);
-      data.forEach(userId => onlineUsersSet.add(userId));
-      setOnlineUsersSet(new Set(onlineUsersSet));
-    }, [onlineUsersSet]);
+      setOnlineUsersSet(new Set(data));
+    }, []);
 
     const {isMobileMenu} = useSelector(state => state["misc"]);
     const {user} = useSelector(state => state.auth);
@@ -83,13 +82,17 @@ const AppLayout = () => (WrappedComponent) => {
 
     const eventListeners = {
       [ONLINE_USERS]: onlineUsersListener,
-      [ONLINE_USERS_LIST]: onlineUsersListener,
       [NEW_MESSAGE_ALERT]: newMessagesAlertListener,
       [NEW_REQUEST]: newRequestListener,
       [REFETCH_CHATS]: refetchListener,
     };
 
     useSockets(socket, eventListeners);
+
+    // After listeners are registered, explicitly request the current online list
+    useEffect(() => {
+      if (socket) (socket as any).emit(GET_ONLINE_USERS);
+    }, [socket]);
 
     return (
       <>
@@ -115,9 +118,7 @@ const AppLayout = () => (WrappedComponent) => {
         }
         <Grid container height={"calc(100vh - 4rem)"}>
           <Grid
-            item
-            sm={4}
-            md={3}
+            size={{ sm: 4, md: 3 }}
             sx={{
               display: {xs: "none", sm: "block"}
             }}
@@ -136,8 +137,7 @@ const AppLayout = () => (WrappedComponent) => {
             }
           </Grid>
           <Grid
-            item
-            xs={12} sm={8} md={5} lg={6}
+            size={{ xs: 12, sm: 8, md: 5, lg: 6 }}
             height={"100%"}
           >
             <WrappedComponent {...props} ChatId={ChatId} user={user}/>
@@ -145,8 +145,7 @@ const AppLayout = () => (WrappedComponent) => {
 
 
           <Grid
-            item
-            md={4} lg={3}
+            size={{ md: 4, lg: 3 }}
             sx={{
               display: {xs: "none", md: "block"},
               padding: "2rem",

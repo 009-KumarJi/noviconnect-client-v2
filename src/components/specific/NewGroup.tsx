@@ -18,7 +18,8 @@ const NewGroup = () => {
   const [selectedMembers, setSelectedMembers] = useState([]);
 
   const {isError, error, data, isLoading} = useAvailableFriendsQuery();
-  const [newGroup, isLoadingNewGroup] = useAsyncMutation(useNewGroupChatMutation);
+  const [newGroupChatHook] = useNewGroupChatMutation();
+  const [newGroup, isLoadingNewGroup] = useAsyncMutation(newGroupChatHook);
   sout("data: ", data);
 
   useErrors([{isError, error},]);

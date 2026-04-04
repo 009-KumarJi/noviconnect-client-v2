@@ -87,7 +87,9 @@ const Chat = ({ChatId, user}) => {
   }
 
   useEffect(() => {
-    socket.emit(CHAT_JOINED, {userId: user._id, members});
+    if (members?.length) {
+      socket.emit(CHAT_JOINED, {userId: user._id, members});
+    }
     dispatch(resetNewMessagesAlert(ChatId));
 
     return () => {
@@ -95,9 +97,11 @@ const Chat = ({ChatId, user}) => {
       setPage(1);
       setMessageTyped("");
       setPrevMessages([]);
-      socket.emit(CHAT_LEFT, {userId: user._id, members});
+      if (members?.length) {
+        socket.emit(CHAT_LEFT, {userId: user._id, members});
+      }
     }
-  }, [ChatId]);
+  }, [ChatId, members]);
 
   useEffect(() => {
     bottomRef?.current?.scrollIntoView({behavior: "smooth"});
