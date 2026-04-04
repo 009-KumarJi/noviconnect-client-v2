@@ -8,7 +8,6 @@ import {
   Groups3 as GroupsIcon,
   ManageAccounts as ManageAccountsIcon,
   Menu as MenuIcon,
-  Message as MessageIcon,
 } from "@mui/icons-material";
 import {useLocation} from "react-router-dom";
 import {Link} from "../styles/StyledComponents.jsx";
@@ -30,10 +29,6 @@ const adminTabs = [
     name: 'Chats',
     path: '/krishnaden/chat-management',
     icon: <GroupsIcon sx={{color: adminTheme.text}}/>,
-  }, {
-    name: 'Messages',
-    path: '/krishnaden/message-management',
-    icon: <MessageIcon sx={{color: adminTheme.text}}/>,
   }
 ];
 

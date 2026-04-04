@@ -6,6 +6,7 @@ import {
   Logout as LogoutIcon,
   Menu as MenuIcon,
   Notifications as NotificationsIcon,
+  Settings as SettingsIcon,
   Search as SearchIcon
 } from "@mui/icons-material";
 import {useNavigate} from "react-router-dom";
@@ -43,6 +44,7 @@ const Header = () => {
     dispatch(resetNotificationCount());
   }
   const navigateToGroup = () => navigate("/groups");
+  const navigateToSettings = () => navigate("/settings");
 
   const logoutHandler = async () => {
     if (socket) (socket as any).disconnect();
@@ -78,6 +80,7 @@ const Header = () => {
               <IconMould icon={<SearchIcon/>} onClick={openSearch} title="Search"/>
               <IconMould icon={<AddIcon/>} onClick={openNewGroup} title="New Group"/>
               <IconMould icon={<GroupIcon/>} onClick={navigateToGroup} title="Manage Groups"/>
+              <IconMould icon={<SettingsIcon/>} onClick={navigateToSettings} title="Settings"/>
               <IconMould icon={<NotificationsIcon/>} onClick={showNotification} title="Notifications"
                          value={notificationCount}/>
               <IconMould icon={<LogoutIcon/>} onClick={logoutHandler} title="Logout"/>

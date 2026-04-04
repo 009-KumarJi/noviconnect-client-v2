@@ -16,10 +16,10 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Home = lazy(() => import("./pages/Home"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Groups = lazy(() => import("./pages/Groups"));
+const Settings = lazy(() => import("./pages/Settings"));
 const AdminLogin = lazy(() => import("./pages/KrishnaDen/KrishnaDenLogin"));
 const Dashboard = lazy(() => import("./pages/KrishnaDen/Dashboard"));
 const UserManagement = lazy(() => import("./pages/KrishnaDen/UserManagement"));
-const MessageManagement = lazy(() => import("./pages/KrishnaDen/MessageManagement"));
 const ChatManagement = lazy(() => import("./pages/KrishnaDen/ChatManagement"));
 
 const App = () => {
@@ -44,6 +44,7 @@ const App = () => {
             <Route path="/" element={<Home/>}/>
             <Route path="/chat/:ChatId" element={<Chat/>}/>
             <Route path="/groups" element={<Groups/>}/>
+            <Route path="/settings" element={<Settings/>}/>
           </Route>
           <Route element={<ProtectRoute user={!user} redirect={"/"}/>}>
             <Route path="/login" element={<Login/>}/>
@@ -56,7 +57,6 @@ const App = () => {
           <Route element={<ProtectRoute user={isAdmin} redirect="/krishnaden"/>}>
             <Route path="/krishnaden/dashboard" element={<Dashboard/>}/>
             <Route path="/krishnaden/user-management" element={<UserManagement/>}/>
-            <Route path="/krishnaden/message-management" element={<MessageManagement/>}/>
             <Route path="/krishnaden/chat-management" element={<ChatManagement/>}/>
           </Route>
           <Route path="*" element={<NotFound/>}/>
