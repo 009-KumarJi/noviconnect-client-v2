@@ -125,6 +125,48 @@ const getPrivateKey = async (userId: string) => {
   return importPrivateKey(identity.privateKey);
 };
 
+const createEncryptedEnvelope = async ({
+  data,
+  members,
+}: {
+  data: ArrayBuffer;
+  members: Array<{_id: string; encryptionPublicKey?: string}>;
+}) => {
+  const unavailableMember = members.find((member) => !member.encryptionPublicKey);
+  if (unavailableMember) {
+    throw new Error("One or more chat members have not finished secure-message setup yet.");
+  }
+
+  const symmetricKey = await crypto.subtle.generateKey({name: "AES-GCM", length: 256}, true, ["encrypt", "decrypt"]);
+  const rawSymmetricKey = await crypto.subtle.exportKey("raw", symmetricKey);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = await crypto.subtle.encrypt(
+    {name: "AES-GCM", iv},
+    symmetricKey,
+    data
+  );
+
+  const encryptedKeys = await Promise.all(
+    members.map(async (member) => {
+      const importedKey = await importPublicKey(member.encryptionPublicKey as string);
+      const encryptedKey = await crypto.subtle.encrypt({name: "RSA-OAEP"}, importedKey, rawSymmetricKey);
+
+      return {
+        userId: member._id,
+        key: arrayBufferToBase64(encryptedKey),
+      };
+    })
+  );
+
+  return {
+    version: 1,
+    algorithm: "AES-GCM",
+    ciphertext,
+    iv: arrayBufferToBase64(iv.buffer),
+    encryptedKeys,
+  };
+};
+
 const createEncryptedPrivateKeyBundle = async ({
   privateKey,
   password,
@@ -448,40 +490,57 @@ export const encryptTextMessage = async ({
   members: Array<{_id: string; encryptionPublicKey?: string}>;
 }) => {
   if (!text.trim()) throw new Error("Message cannot be empty.");
-
-  const unavailableMember = members.find((member) => !member.encryptionPublicKey);
-  if (unavailableMember) {
-    throw new Error("One or more chat members have not finished secure-message setup yet.");
-  }
-
-  const symmetricKey = await crypto.subtle.generateKey({name: "AES-GCM", length: 256}, true, ["encrypt", "decrypt"]);
-  const rawSymmetricKey = await crypto.subtle.exportKey("raw", symmetricKey);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ciphertext = await crypto.subtle.encrypt(
-    {name: "AES-GCM", iv},
-    symmetricKey,
-    textEncoder.encode(text)
-  );
-
-  const encryptedKeys = await Promise.all(
-    members.map(async (member) => {
-      const importedKey = await importPublicKey(member.encryptionPublicKey as string);
-      const encryptedKey = await crypto.subtle.encrypt({name: "RSA-OAEP"}, importedKey, rawSymmetricKey);
-
-      return {
-        userId: member._id,
-        key: arrayBufferToBase64(encryptedKey),
-      };
-    })
-  );
+  const envelope = await createEncryptedEnvelope({
+    data: textEncoder.encode(text),
+    members,
+  });
 
   return {
     version: 1,
     algorithm: "AES-GCM",
-    ciphertext: arrayBufferToBase64(ciphertext),
-    iv: arrayBufferToBase64(iv.buffer),
-    encryptedKeys,
+    ciphertext: arrayBufferToBase64(envelope.ciphertext),
+    iv: envelope.iv,
+    encryptedKeys: envelope.encryptedKeys,
   };
+};
+
+export const encryptAttachmentsForUpload = async ({
+  files,
+  members,
+}: {
+  files: File[];
+  members: Array<{_id: string; encryptionPublicKey?: string}>;
+}) => {
+  const encryptedFiles = await Promise.all(
+    files.map(async (file) => {
+      const encryptedEnvelope = await createEncryptedEnvelope({
+        data: await file.arrayBuffer(),
+        members,
+      });
+
+      return {
+        file: new File(
+          [encryptedEnvelope.ciphertext],
+          `${file.name}.enc`,
+          {type: "application/octet-stream"}
+        ),
+        metadata: {
+          originalName: file.name,
+          mimeType: file.type,
+          size: file.size,
+          isEncrypted: true,
+          encryptedFile: {
+            version: 1,
+            algorithm: "AES-GCM",
+            iv: encryptedEnvelope.iv,
+            encryptedKeys: encryptedEnvelope.encryptedKeys,
+          },
+        },
+      };
+    })
+  );
+
+  return encryptedFiles;
 };
 
 export const decryptMessageContent = async ({
@@ -545,4 +604,61 @@ export const decryptMessageContent = async ({
       e2eeState: "unavailable",
     };
   }
+};
+
+export const decryptAttachmentBlob = async ({
+  attachment,
+  userId,
+}: {
+  attachment: any;
+  userId: string;
+}) => {
+  if (!attachment?.isEncrypted || !attachment?.encryptedFile?.encryptedKeys?.length) {
+    return {
+      url: attachment?.url,
+      mimeType: attachment?.mimeType,
+      originalName: attachment?.originalName,
+      isEncrypted: false,
+    };
+  }
+
+  const privateKey = await getPrivateKey(userId);
+  const encryptedKey = attachment.encryptedFile.encryptedKeys.find(
+    (entry: any) => entry.userId?.toString?.() === userId || entry.userId === userId
+  );
+
+  if (!encryptedKey?.key) {
+    throw new Error("Attachment cannot be decrypted on this device.");
+  }
+
+  const response = await fetch(attachment.url);
+  const encryptedBuffer = await response.arrayBuffer();
+  const rawSymmetricKey = await crypto.subtle.decrypt(
+    {name: "RSA-OAEP"},
+    privateKey,
+    base64ToArrayBuffer(encryptedKey.key)
+  );
+  const symmetricKey = await crypto.subtle.importKey(
+    "raw",
+    rawSymmetricKey,
+    {name: "AES-GCM"},
+    false,
+    ["decrypt"]
+  );
+  const plaintext = await crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv: new Uint8Array(base64ToArrayBuffer(attachment.encryptedFile.iv)),
+    },
+    symmetricKey,
+    encryptedBuffer
+  );
+
+  const blob = new Blob([plaintext], {type: attachment.mimeType || "application/octet-stream"});
+  return {
+    url: URL.createObjectURL(blob),
+    mimeType: attachment.mimeType,
+    originalName: attachment.originalName,
+    isEncrypted: true,
+  };
 };

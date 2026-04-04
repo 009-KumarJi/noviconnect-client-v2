@@ -24,6 +24,16 @@ const checks = [
     path: "src/components/shared/MessageComponent.tsx",
     pattern: /Encrypted|Legacy|Secure message unavailable/,
   },
+  {
+    label: "attachment encryption flow",
+    path: "src/components/dialogs/FileMenu.tsx",
+    pattern: /encryptAttachmentsForUpload/,
+  },
+  {
+    label: "attachment decryption flow",
+    path: "src/components/shared/RenderAttachment.tsx",
+    pattern: /decryptAttachmentBlob/,
+  },
 ];
 
 const forbiddenPatterns = [

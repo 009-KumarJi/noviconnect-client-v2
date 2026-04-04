@@ -1,7 +1,6 @@
 import React, {memo} from 'react';
 import {Box, Chip, Stack, Typography} from "@mui/material";
 import moment from "../../lib/dayjs.js";
-import {fileFormat} from "../../lib/features.js";
 import RenderAttachment from "./RenderAttachment.jsx";
 import {motion} from "framer-motion";
 import {userTheme} from "../../constants/userTheme.constant.js";
@@ -73,13 +72,9 @@ const MessageComponent = ({message, loggedUser}) => {
       {
         attachments.length > 0 && (
           attachments.map((attachment, index) => {
-            const url = attachment.url;
-            const file = fileFormat(url);
             return (
               <Box key={index} mt={0.8}>
-                <a href={url} target="_blank" download={true} style={{color: userTheme.accent}}>
-                  {RenderAttachment(file, url)}
-                </a>
+                <RenderAttachment attachment={attachment} userId={loggedUser?._id}/>
               </Box>
             )
           }))
