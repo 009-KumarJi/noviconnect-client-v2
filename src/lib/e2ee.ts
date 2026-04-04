@@ -356,7 +356,12 @@ export const decryptMessageContent = async ({
   message: any;
   userId: string;
 }) => {
-  if (!message?.encryptedContent?.ciphertext) return message;
+  if (!message?.encryptedContent?.ciphertext) {
+    return {
+      ...message,
+      e2eeState: message?.content ? "legacy" : undefined,
+    };
+  }
 
   try {
     const privateKey = await getPrivateKey(userId);
@@ -368,6 +373,7 @@ export const decryptMessageContent = async ({
       return {
         ...message,
         content: "Encrypted message unavailable on this device.",
+        e2eeState: "unavailable",
       };
     }
 
@@ -395,11 +401,13 @@ export const decryptMessageContent = async ({
     return {
       ...message,
       content: textDecoder.decode(plaintext),
+      e2eeState: "encrypted",
     };
   } catch (error) {
     return {
       ...message,
       content: "Encrypted message unavailable on this device.",
+      e2eeState: "unavailable",
     };
   }
 };
