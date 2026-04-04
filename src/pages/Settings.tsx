@@ -163,9 +163,26 @@ const Settings = () => {
           <Paper sx={settingsCardSx}>
             <Typography variant="h5" sx={{fontWeight: 700, color: userTheme.text, mb: 2}}>Change Password</Typography>
             <Stack spacing={2}>
+              <Typography sx={{color: userTheme.textMuted}}>
+                Changing your password here preserves secure-message access by rewrapping your encrypted recovery bundle.
+              </Typography>
               <TextField label="Current Password" type="password" value={passwords.currentPassword} onChange={(e) => setPasswords((prev) => ({...prev, currentPassword: e.target.value}))} sx={settingsFieldSx} />
               <TextField label="New Password" type="password" value={passwords.newPassword} onChange={(e) => setPasswords((prev) => ({...prev, newPassword: e.target.value}))} sx={settingsFieldSx} />
               <Button onClick={updatePassword} disabled={isLoading} sx={settingsButtonSx}>Update Password</Button>
+            </Stack>
+          </Paper>
+
+          <Paper sx={settingsCardSx}>
+            <Typography variant="h5" sx={{fontWeight: 700, color: userTheme.text, mb: 2}}>Encryption Status</Typography>
+            <Stack spacing={1.2}>
+              <Typography sx={{color: userTheme.text}}>
+                {user?.encryptionPublicKey
+                  ? "Secure messaging is active for this account."
+                  : "Secure messaging has not been initialized on this account yet."}
+              </Typography>
+              <Typography sx={{color: userTheme.textMuted}}>
+                Password changes from this page preserve encrypted-chat recovery. OTP password reset from the recovery page resets the server-side recovery bundle.
+              </Typography>
             </Stack>
           </Paper>
 

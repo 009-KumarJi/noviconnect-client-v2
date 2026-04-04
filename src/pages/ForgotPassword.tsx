@@ -61,6 +61,12 @@ const ForgotPassword = () => {
         newPassword 
       });
       toast.success(data.message);
+      if (data?.e2eeRecoveryReset) {
+        toast("Secure message recovery was reset. Older encrypted chats may only remain readable on devices that were already logged in.", {
+          icon: "⚠️",
+          duration: 7000,
+        });
+      }
       navigate("/login", { replace: true });
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Password reset failed");
@@ -88,6 +94,19 @@ const ForgotPassword = () => {
             </Typography>
             <Typography sx={{color: userTheme.textMuted}}>
               Step through email verification and set a fresh password.
+            </Typography>
+            <Typography
+              sx={{
+                color: "#fcd34d",
+                backgroundColor: "rgba(250, 204, 21, 0.08)",
+                border: "1px solid rgba(250, 204, 21, 0.18)",
+                borderRadius: "1rem",
+                px: 1.5,
+                py: 1.2,
+                fontSize: "0.92rem",
+              }}
+            >
+              Password reset by OTP can reset secure message recovery for this account. Older encrypted chats may not be recoverable on new devices afterward.
             </Typography>
           </Stack>
           {step === 1 && (
