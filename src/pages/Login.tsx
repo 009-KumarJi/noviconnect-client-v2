@@ -27,11 +27,23 @@ const Login = () => {
       );
       toast.success(data.message);
       dispatch(userExists(data.user));
-      await ensureUserEncryptionSetup({
+      const encryptionResult = await ensureUserEncryptionSetup({
         user: data.user,
         server,
         password: password.value,
       });
+      if (encryptionResult?.needsRecoveryKey) {
+        toast("Secure history needs your recovery key on this device. You can restore it from Settings.", {
+          icon: "🔐",
+          duration: 6000,
+        });
+      }
+      if (encryptionResult?.recoveryKey) {
+        toast("A new recovery key was created for this account. Open Settings and save it somewhere safe.", {
+          icon: "🗝️",
+          duration: 7000,
+        });
+      }
       navigate("/", {replace: true});
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Something went wrong!");

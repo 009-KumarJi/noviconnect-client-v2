@@ -10,7 +10,14 @@ import {userDoesNotExist, userExists} from "../redux/reducers/authSlice.js";
 import {resetStore} from "../redux/resetActions.js";
 import apiSlice from "../redux/api/apiSlice.js";
 import {useNavigate} from "react-router-dom";
-import {clearEncryptionIdentity, rewrapEncryptionBundle} from "../lib/e2ee";
+import {
+  clearEncryptionIdentity,
+  clearPendingRecoveryKey,
+  getPendingRecoveryKey,
+  regenerateRecoveryKey,
+  restoreEncryptionWithRecoveryKey,
+  rewrapEncryptionBundle
+} from "../lib/e2ee";
 
 const Settings = () => {
   const {user} = useSelector((state: any) => state.auth);
@@ -28,6 +35,9 @@ const Settings = () => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [recoveryKey, setRecoveryKey] = useState("");
+  const [recoveryPassword, setRecoveryPassword] = useState("");
+  const [pendingRecoveryKey, setPendingRecoveryKey] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -39,6 +49,7 @@ const Settings = () => {
     });
     setEmail(user.email || "");
     setAvatarPreview(user.avatar?.url || "");
+    setPendingRecoveryKey(getPendingRecoveryKey() || "");
   }, [user]);
 
   const updateProfile = async () => {
@@ -114,6 +125,65 @@ const Settings = () => {
     }
   };
 
+  const restoreWithRecoveryKey = async () => {
+    setIsLoading(true);
+    try {
+      await restoreEncryptionWithRecoveryKey({
+        userId: user?._id,
+        recoveryKey,
+        password: recoveryPassword,
+        server,
+      });
+      toast.success("Secure history restored on this device.");
+      setRecoveryKey("");
+      setRecoveryPassword("");
+    } catch (error: any) {
+      toast.error(error?.message || error?.response?.data?.message || "Recovery key restore failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const regenerateKey = async () => {
+    if (!recoveryPassword) {
+      toast.error("Enter your current password to regenerate a recovery key.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const nextRecoveryKey = await regenerateRecoveryKey({
+        userId: user?._id,
+        password: recoveryPassword,
+        server,
+      });
+      setPendingRecoveryKey(nextRecoveryKey);
+      toast.success("A new recovery key has been generated. Save it now.");
+    } catch (error: any) {
+      toast.error(error?.message || "Recovery key regeneration failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetEncryptionState = async () => {
+    if (!window.confirm("Reset secure messaging and lose access to older encrypted history on new devices?")) return;
+
+    setIsLoading(true);
+    try {
+      const {data} = await axios.delete(`${server}/api/v1/user/encryption-state`, {withCredentials: true});
+      clearEncryptionIdentity(user?._id);
+      clearPendingRecoveryKey();
+      setPendingRecoveryKey("");
+      dispatch(userExists(data.user));
+      toast.success(data.message);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Secure messaging reset failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Box sx={{minHeight: "100%", background: userTheme.gradient, py: 3}}>
       <Container maxWidth="md">
@@ -183,6 +253,31 @@ const Settings = () => {
               <Typography sx={{color: userTheme.textMuted}}>
                 Password changes from this page preserve encrypted-chat recovery. OTP password reset from the recovery page resets the server-side recovery bundle.
               </Typography>
+              {pendingRecoveryKey && (
+                <Box sx={{p: 1.5, borderRadius: "1rem", backgroundColor: "rgba(34, 197, 94, 0.08)", border: "1px solid rgba(34, 197, 94, 0.2)"}}>
+                  <Typography sx={{color: userTheme.text, fontWeight: 700, mb: 0.5}}>Save this recovery key</Typography>
+                  <Typography sx={{color: "#86efac", fontFamily: "monospace", letterSpacing: "0.08rem", wordBreak: "break-word"}}>
+                    {pendingRecoveryKey}
+                  </Typography>
+                  <Button sx={{mt: 1, ...settingsButtonSx}} onClick={() => {
+                    clearPendingRecoveryKey();
+                    setPendingRecoveryKey("");
+                  }}>
+                    I Saved It
+                  </Button>
+                </Box>
+              )}
+              <TextField label="Recovery Key" value={recoveryKey} onChange={(e) => setRecoveryKey(e.target.value.toUpperCase())} sx={settingsFieldSx} />
+              <TextField label="Current Account Password" type="password" value={recoveryPassword} onChange={(e) => setRecoveryPassword(e.target.value)} sx={settingsFieldSx} />
+              <Stack direction={{xs: "column", md: "row"}} spacing={1.5}>
+                <Button onClick={restoreWithRecoveryKey} disabled={isLoading} sx={settingsButtonSx}>Restore with Recovery Key</Button>
+                <Button onClick={regenerateKey} disabled={isLoading} sx={{...settingsButtonSx, background: "rgba(56, 189, 248, 0.16)", color: userTheme.accentBlue, border: `1px solid ${userTheme.borderStrong}`}}>
+                  Regenerate Recovery Key
+                </Button>
+              </Stack>
+              <Button onClick={resetEncryptionState} disabled={isLoading} sx={{...settingsButtonSx, background: "rgba(251, 113, 133, 0.18)", color: userTheme.danger, border: "1px solid rgba(251, 113, 133, 0.3)"}}>
+                Reset Secure Messaging
+              </Button>
             </Stack>
           </Paper>
 

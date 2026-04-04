@@ -152,11 +152,17 @@ const SignUpForm = () => {
         headers: {"Content-Type": "multipart/form-data"},
       });
       dispatch(userExists(data.user));
-      await ensureUserEncryptionSetup({
+      const encryptionResult = await ensureUserEncryptionSetup({
         user: data.user,
         server,
         password: password.value,
       });
+      if (encryptionResult?.recoveryKey) {
+        toast("A recovery key was created for secure message recovery. Save it from Settings after signup.", {
+          icon: "🗝️",
+          duration: 7000,
+        });
+      }
       toast.success(data.message);
       navigate("/", {replace: true});
     } catch (error: any) {

@@ -9,6 +9,7 @@ const KEY_ALGORITHM = {
 
 const WRAP_ALGORITHM = {name: "AES-GCM", length: 256} as const;
 const KDF_ITERATIONS = 250000;
+const pendingRecoveryKeyStorageKey = "noviconnect:e2ee:pending-recovery-key";
 
 const privateKeyStorageKey = (userId: string) => `noviconnect:e2ee:private:${userId}`;
 const publicKeyStorageKey = (userId: string) => `noviconnect:e2ee:public:${userId}`;
@@ -89,6 +90,23 @@ const storeLocalIdentity = ({userId, privateKey, publicKey}: {userId: string; pr
   localStorage.setItem(publicKeyStorageKey(userId), publicKey);
 };
 
+const generateRecoveryKey = () => {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const randomValues = crypto.getRandomValues(new Uint8Array(20));
+  const segments = [];
+
+  for (let i = 0; i < 5; i += 1) {
+    let segment = "";
+    for (let j = 0; j < 4; j += 1) {
+      const index = randomValues[i * 4 + j] % alphabet.length;
+      segment += alphabet[index];
+    }
+    segments.push(segment);
+  }
+
+  return segments.join("-");
+};
+
 const createAndStoreLocalIdentity = async (userId: string) => {
   const keyPair = await crypto.subtle.generateKey(KEY_ALGORITHM, true, ["encrypt", "decrypt"]);
   const [publicKey, privateKey] = await Promise.all([
@@ -136,6 +154,33 @@ const createEncryptedPrivateKeyBundle = async ({
   };
 };
 
+const createRecoveryKeyBundle = async ({
+  privateKey,
+  recoveryKey,
+}: {
+  privateKey: string;
+  recoveryKey: string;
+}) => {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const wrapKey = await deriveWrapKey({
+    password: recoveryKey,
+    salt,
+    iterations: KDF_ITERATIONS,
+  });
+  const encryptedPrivateKey = await crypto.subtle.encrypt(
+    {name: "AES-GCM", iv},
+    wrapKey,
+    base64ToArrayBuffer(privateKey)
+  );
+
+  return {
+    encryptedRecoveryKeyBundle: arrayBufferToBase64(encryptedPrivateKey),
+    recoveryBundleIv: arrayBufferToBase64(iv.buffer),
+    recoveryBundleSalt: arrayBufferToBase64(salt.buffer),
+  };
+};
+
 const decryptPrivateKeyBundle = async ({
   encryptedPrivateKeyBundle,
   encryptionBundleIv,
@@ -170,19 +215,25 @@ const saveEncryptionBundle = async ({
   encryptionPublicKey,
   privateKey,
   password,
+  recoveryKey,
 }: {
   server: string;
   encryptionPublicKey: string;
   privateKey: string;
   password: string;
+  recoveryKey?: string;
 }) => {
   const bundle = await createEncryptedPrivateKeyBundle({privateKey, password});
+  const recoveryBundle = recoveryKey
+    ? await createRecoveryKeyBundle({privateKey, recoveryKey})
+    : {};
 
   await axios.put(
     `${server}/api/v1/user/encryption-bundle`,
     {
       encryptionPublicKey,
       ...bundle,
+      ...recoveryBundle,
     },
     {withCredentials: true}
   );
@@ -202,17 +253,21 @@ export const ensureUserEncryptionSetup = async ({
   const localIdentity = await loadLocalIdentity(user._id);
   if (localIdentity) {
     if (user.encryptionPublicKey !== localIdentity.publicKey && password) {
+      const recoveryKey = generateRecoveryKey();
       await saveEncryptionBundle({
         server,
         encryptionPublicKey: localIdentity.publicKey,
         privateKey: localIdentity.privateKey,
         password,
+        recoveryKey,
       });
+      sessionStorage.setItem(pendingRecoveryKeyStorageKey, recoveryKey);
     }
 
     return {
       restoredFromBundle: false,
       uploadedBundle: Boolean(password && user.encryptionPublicKey !== localIdentity.publicKey),
+      recoveryKey: sessionStorage.getItem(pendingRecoveryKeyStorageKey),
     };
   }
 
@@ -220,36 +275,46 @@ export const ensureUserEncryptionSetup = async ({
   const bundle = data?.encryptionBundle;
 
   if (bundle?.encryptedPrivateKeyBundle && password) {
-    const privateKey = await decryptPrivateKeyBundle({
-      encryptedPrivateKeyBundle: bundle.encryptedPrivateKeyBundle,
-      encryptionBundleIv: bundle.encryptionBundleIv,
-      encryptionBundleSalt: bundle.encryptionBundleSalt,
-      encryptionBundleIterations: bundle.encryptionBundleIterations,
-      password,
-    });
+    try {
+      const privateKey = await decryptPrivateKeyBundle({
+        encryptedPrivateKeyBundle: bundle.encryptedPrivateKeyBundle,
+        encryptionBundleIv: bundle.encryptionBundleIv,
+        encryptionBundleSalt: bundle.encryptionBundleSalt,
+        encryptionBundleIterations: bundle.encryptionBundleIterations,
+        password,
+      });
 
-    storeLocalIdentity({
-      userId: user._id,
-      privateKey,
-      publicKey: bundle.encryptionPublicKey,
-    });
+      storeLocalIdentity({
+        userId: user._id,
+        privateKey,
+        publicKey: bundle.encryptionPublicKey,
+      });
 
-    return {restoredFromBundle: true, uploadedBundle: false};
+      return {restoredFromBundle: true, uploadedBundle: false, recoveryKey: sessionStorage.getItem(pendingRecoveryKeyStorageKey)};
+    } catch (error) {
+      if (bundle?.hasRecoveryKey) {
+        return {restoredFromBundle: false, uploadedBundle: false, needsRecoveryKey: true};
+      }
+      throw error;
+    }
   }
 
   if (!password) {
-    return {restoredFromBundle: false, uploadedBundle: false};
+    return {restoredFromBundle: false, uploadedBundle: false, needsRecoveryKey: Boolean(bundle?.hasRecoveryKey)};
   }
 
   const identity = await createAndStoreLocalIdentity(user._id);
+  const recoveryKey = generateRecoveryKey();
   await saveEncryptionBundle({
     server,
     encryptionPublicKey: identity.publicKey,
     privateKey: identity.privateKey,
     password,
+    recoveryKey,
   });
+  sessionStorage.setItem(pendingRecoveryKeyStorageKey, recoveryKey);
 
-  return {restoredFromBundle: false, uploadedBundle: true};
+  return {restoredFromBundle: false, uploadedBundle: true, recoveryKey};
 };
 
 export const rewrapEncryptionBundle = async ({
@@ -303,6 +368,76 @@ export const clearEncryptionIdentity = (userId?: string) => {
   if (!userId) return;
   localStorage.removeItem(privateKeyStorageKey(userId));
   localStorage.removeItem(publicKeyStorageKey(userId));
+};
+
+export const getPendingRecoveryKey = () => sessionStorage.getItem(pendingRecoveryKeyStorageKey);
+export const clearPendingRecoveryKey = () => sessionStorage.removeItem(pendingRecoveryKeyStorageKey);
+
+export const restoreEncryptionWithRecoveryKey = async ({
+  userId,
+  recoveryKey,
+  password,
+  server,
+}: {
+  userId: string;
+  recoveryKey: string;
+  password: string;
+  server: string;
+}) => {
+  const {data} = await axios.get(`${server}/api/v1/user/encryption-bundle`, {withCredentials: true});
+  const bundle = data?.encryptionBundle;
+
+  if (!bundle?.encryptedRecoveryKeyBundle || !bundle?.recoveryBundleIv || !bundle?.recoveryBundleSalt) {
+    throw new Error("No recovery key bundle is available for this account.");
+  }
+
+  const privateKey = await decryptPrivateKeyBundle({
+    encryptedPrivateKeyBundle: bundle.encryptedRecoveryKeyBundle,
+    encryptionBundleIv: bundle.recoveryBundleIv,
+    encryptionBundleSalt: bundle.recoveryBundleSalt,
+    encryptionBundleIterations: KDF_ITERATIONS,
+    password: recoveryKey,
+  });
+
+  storeLocalIdentity({
+    userId,
+    privateKey,
+    publicKey: bundle.encryptionPublicKey,
+  });
+
+  await saveEncryptionBundle({
+    server,
+    encryptionPublicKey: bundle.encryptionPublicKey,
+    privateKey,
+    password,
+    recoveryKey,
+  });
+};
+
+export const regenerateRecoveryKey = async ({
+  userId,
+  password,
+  server,
+}: {
+  userId: string;
+  password: string;
+  server: string;
+}) => {
+  const identity = await loadLocalIdentity(userId);
+  if (!identity) throw new Error("Local secure identity is unavailable on this device.");
+
+  const recoveryKey = generateRecoveryKey();
+  await saveEncryptionBundle({
+    server,
+    encryptionPublicKey: identity.publicKey,
+    privateKey: identity.privateKey,
+    password,
+    recoveryKey,
+  });
+
+  sessionStorage.setItem(pendingRecoveryKeyStorageKey, recoveryKey);
+
+  return recoveryKey;
 };
 
 export const encryptTextMessage = async ({
