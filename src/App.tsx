@@ -4,7 +4,7 @@ import ProtectRoute from "./components/auth/ProtectRoute";
 import {LayoutLoader} from "./components/layout/Loaders";
 import {useDispatch, useSelector} from "react-redux";
 import axios from "axios";
-import {server} from "./constants/config.constant";
+import {isE2EEEnabled, server} from "./constants/config.constant";
 import {userDoesNotExist, userExists} from "./redux/reducers/authSlice";
 import {Toaster} from "react-hot-toast";
 import {SocketProvider} from "./socket";
@@ -37,8 +37,7 @@ const App = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!user?._id) return;
-
+    if (!isE2EEEnabled || !user?._id) return;
     ensureUserEncryptionSetup({user, server})
       .then(() => null)
       .catch(() => null);

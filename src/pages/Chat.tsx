@@ -12,13 +12,13 @@ import {useErrors, useSockets} from "../hooks/hook.jsx";
 import {useInfiniteScrollTop} from "../hooks/useInfiniteScroll";
 import {useDispatch} from "react-redux";
 import {setIsFileMenu} from "../redux/reducers/miscSlice.js";
-import {sout} from "../utils/helper.js";
 import {resetNewMessagesAlert} from "../redux/reducers/chatSlice.js";
 import {TypingLoader} from "../components/layout/Loaders.jsx";
 import {useNavigate} from "react-router-dom";
 import {userTheme} from "../constants/userTheme.constant.js";
 import {decryptMessageContent, encryptTextMessage} from "../lib/e2ee";
 import toast from "react-hot-toast";
+import {isE2EEEnabled} from "../constants/config.constant.js";
 
 
 const Chat = ({ChatId, user}) => {
@@ -62,7 +62,6 @@ const Chat = ({ChatId, user}) => {
     if (!iAmTyping) {
       socket.emit(START_TYPING, {members, ChatId});
       setIAmTyping(true);
-      sout("I am typing...")
     }
 
     if (typingTimeout.current) clearTimeout(typingTimeout.current);
@@ -70,7 +69,6 @@ const Chat = ({ChatId, user}) => {
     typingTimeout.current = setTimeout(() => {
       socket.emit(STOP_TYPING, {members, ChatId});
       setIAmTyping(false);
-      sout("I stopped typing...")
     }, [2000]);
   };
 
@@ -89,12 +87,16 @@ const Chat = ({ChatId, user}) => {
 
     (async () => {
       try {
-        const encryptedMessage = await encryptTextMessage({
-          text: messageTyped,
-          members: members || [],
-        });
+        if (isE2EEEnabled) {
+          const encryptedMessage = await encryptTextMessage({
+            text: messageTyped,
+            members: members || [],
+          });
 
-        socket.emit(NEW_MESSAGE, {ChatId, members, message: encryptedMessage});
+          socket.emit(NEW_MESSAGE, {ChatId, members, message: encryptedMessage});
+        } else {
+          socket.emit(NEW_MESSAGE, {ChatId, members, message: messageTyped});
+        }
         setMessageTyped("");
       } catch (error: any) {
         toast.error(error?.message || "Unable to send secure message right now.");
@@ -131,9 +133,11 @@ const Chat = ({ChatId, user}) => {
     if (!prevMessagesChunk.data?.messages?.length || !user?._id) return;
 
     (async () => {
-      const decryptedMessages = await Promise.all(
-        prevMessagesChunk.data.messages.map((message) => decryptMessageContent({message, userId: user._id}))
-      );
+      const decryptedMessages = isE2EEEnabled
+        ? await Promise.all(
+            prevMessagesChunk.data.messages.map((message) => decryptMessageContent({message, userId: user._id}))
+          )
+        : prevMessagesChunk.data.messages;
 
       setPrevMessages((prev) => [...prev, ...decryptedMessages]);
     })();
@@ -143,7 +147,9 @@ const Chat = ({ChatId, user}) => {
     if (data.ChatId !== ChatId) return;
 
     (async () => {
-      const decryptedMessage = await decryptMessageContent({message: data.message, userId: user._id});
+      const decryptedMessage = isE2EEEnabled
+        ? await decryptMessageContent({message: data.message, userId: user._id})
+        : data.message;
       setMessages(prevState => prevState.concat(decryptedMessage))
     })();
   }, [ChatId, user?._id]);
@@ -151,17 +157,14 @@ const Chat = ({ChatId, user}) => {
   const startTypingListener = useCallback((data) => {
     if (data.ChatId !== ChatId) return;
     setUserTyping(true);
-    sout("User is typing...", data);
   }, [ChatId]);
 
   const stopTypingListener = useCallback((data) => {
     if (data.ChatId !== ChatId) return;
     setUserTyping(false);
-    sout("User stopped typing...", data);
   }, [ChatId]);
 
   const alertListener = useCallback((data) => {
-    sout("Alert Listener: ", data)
     if (data.ChatId !== ChatId) return;
     const messageForAlert = {
       content: data.message,

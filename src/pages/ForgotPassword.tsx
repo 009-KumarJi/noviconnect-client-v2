@@ -35,7 +35,6 @@ const ForgotPassword = () => {
     setIsLoading(true);
     try {
       const { data } = await axios.post(`${server}/api/v1/user/verify-otp`, { email, otp });
-      console.log("verifyOTP response:", data);  // <-- check this in browser console
       if (!data.resetToken) {
         toast.error("Server did not return a reset token. Please try again.");
         return;
@@ -54,7 +53,6 @@ const ForgotPassword = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      console.log("Sending reset:", { email, resetToken, newPassword });
       const { data } = await axios.patch(`${server}/api/v1/user/reset-password`, { 
         email, 
         resetToken, 
