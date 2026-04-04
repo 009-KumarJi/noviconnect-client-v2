@@ -44,7 +44,9 @@ const AppLayout = () => (WrappedComponent) => {
     const {newMessagesAlert} = useSelector(state => state['chat']);
     sout("New Messages Alert: ", newMessagesAlert)
 
-    const {isLoading, data, isError, error, refetch} = useMyChatsQuery("");
+    const {isLoading, data, isError, error, refetch} = useMyChatsQuery("", {
+      skip: !user,
+    });
 
     useErrors([{isError, error}])
     const handleDeleteChat = (_event, _id, groupChat) => {
@@ -91,8 +93,8 @@ const AppLayout = () => (WrappedComponent) => {
 
     // After listeners are registered, explicitly request the current online list
     useEffect(() => {
-      if (socket) (socket as any).emit(GET_ONLINE_USERS);
-    }, [socket]);
+      if (socket && user) (socket as any).emit(GET_ONLINE_USERS);
+    }, [socket, user]);
 
     return (
       <>

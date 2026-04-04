@@ -19,6 +19,7 @@ import {setIsMobileMenu, setIsNewGroup, setIsNotification, setIsSearch} from "..
 import {resetNotificationCount} from "../../redux/reducers/chatSlice.js";
 import {resetStore} from "../../redux/resetActions.js";
 import {getSocket} from "../../socket.jsx";
+import apiSlice from "../../redux/api/apiSlice.js";
 
 
 const SearchDialog = lazy(() => import("../specific/Search.jsx"));
@@ -43,17 +44,19 @@ const Header = () => {
   }
   const navigateToGroup = () => navigate("/groups");
 
-  const logoutHandler = () => {
+  const logoutHandler = async () => {
     if (socket) (socket as any).disconnect();
 
-    axios
-      .get(`${server}/api/v1/user/logout`, {withCredentials: true})
-      .then(res => {
-        dispatch(resetStore());
-        dispatch(userDoesNotExist());
-        toast.success(res?.data?.message || "Logged-out successfully!");
-      })
-      .catch(err => toast.error(err?.response?.data?.message || "Something went wrong!"))
+    try {
+      const res = await axios.get(`${server}/api/v1/user/logout`, {withCredentials: true});
+      dispatch(apiSlice.util.resetApiState());
+      dispatch(resetStore());
+      dispatch(userDoesNotExist());
+      toast.success(res?.data?.message || "Logged-out successfully!");
+      navigate("/login", {replace: true});
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Something went wrong!");
+    }
   }
 
   return (
