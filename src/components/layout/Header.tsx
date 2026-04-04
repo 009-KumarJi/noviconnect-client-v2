@@ -9,7 +9,6 @@ import {
   Search as SearchIcon
 } from "@mui/icons-material";
 import {useNavigate} from "react-router-dom";
-import {colorPalette, textDark} from "../../constants/color.constant.js";
 import axios from "axios";
 import {server} from "../../constants/config.constant.js";
 import toast from "react-hot-toast";
@@ -20,6 +19,7 @@ import {resetNotificationCount} from "../../redux/reducers/chatSlice.js";
 import {resetStore} from "../../redux/resetActions.js";
 import {getSocket} from "../../socket.jsx";
 import apiSlice from "../../redux/api/apiSlice.js";
+import {userTheme} from "../../constants/userTheme.constant.js";
 
 
 const SearchDialog = lazy(() => import("../specific/Search.jsx"));
@@ -63,14 +63,10 @@ const Header = () => {
     <>
       <Box sx={{flexGrow: 1}} height={"4rem"}>
         <AppBar position="static"
-                sx={{backgroundImage: `linear-gradient(90deg, ${colorPalette().CP8}, rgb(65,125,143))`}}>
+                sx={{background: "rgba(8, 15, 25, 0.88)", backdropFilter: "blur(18px)", borderBottom: `1px solid ${userTheme.border}`, boxShadow: "none"}}>
           <Toolbar>
-            <Typography color={textDark} variant={"h6"} fontWeight={"bold"} sx={{display: {xs: "none", sm: "block"}}}>
-              Novi<span style={{
-              color: `${colorPalette(1).CP9}`,
-              backgroundColor: `${textDark}`,
-              paddingRight: "0.2rem"
-            }}>Connect</span>
+            <Typography color={userTheme.text} variant={"h6"} fontWeight={"bold"} sx={{display: {xs: "none", sm: "block"}}}>
+              Novi<span style={{color: userTheme.accentBlue}}>Connect</span>
             </Typography>
             <Box sx={{display: {xs: "block", sm: "none"}}}>
               <IconButton color="inherit" onClick={handleMobile}>
@@ -118,7 +114,7 @@ const Header = () => {
 const IconMould = ({icon, onClick, title, value}) => {
   return (
     <Tooltip title={title}>
-      <IconButton color={"inherit"} size={"large"} onClick={onClick}>
+      <IconButton color={"inherit"} size={"large"} onClick={onClick} sx={{border: `1px solid ${userTheme.border}`, ml: 0.6, backgroundColor: "rgba(13, 22, 35, 0.72)", "&:hover": {backgroundColor: userTheme.accentSoft}}}>
         {
           value
             ? <Badge badgeContent={value} color="error">{icon}</Badge>

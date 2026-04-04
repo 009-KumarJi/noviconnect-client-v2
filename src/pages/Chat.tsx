@@ -1,7 +1,6 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react'
 import AppLayout from "../components/layout/AppLayout.jsx";
 import {IconButton, Skeleton, Stack} from "@mui/material";
-import {colorPalette} from "../constants/color.constant.js";
 import {AttachFile as AttachFileIcon, Send as SendIcon} from "@mui/icons-material";
 import {InputBox} from "../components/styles/StyledComponents.jsx";
 import FileMenu from "../components/dialogs/FileMenu.jsx";
@@ -17,6 +16,7 @@ import {sout} from "../utils/helper.js";
 import {resetNewMessagesAlert} from "../redux/reducers/chatSlice.js";
 import {TypingLoader} from "../components/layout/Loaders.jsx";
 import {useNavigate} from "react-router-dom";
+import {userTheme} from "../constants/userTheme.constant.js";
 
 
 const Chat = ({ChatId, user}) => {
@@ -164,7 +164,7 @@ const Chat = ({ChatId, user}) => {
         boxSizing="border-box"
         padding={"1rem"}
         spacing={"1rem"}
-        bgcolor={colorPalette(0.3).CP7}
+        bgcolor={"rgba(8, 15, 25, 0.46)"}
         height={"90%"}
         sx={{
           overflowX: "hidden",
@@ -204,7 +204,8 @@ const Chat = ({ChatId, user}) => {
             sx={{
               position: "absolute",
               left: "1.5rem",
-              rotate: "20deg"
+              rotate: "20deg",
+              color: userTheme.textMuted,
             }}
             onClick={handleFileOpen}
           >
@@ -220,12 +221,12 @@ const Chat = ({ChatId, user}) => {
             type="submit"
             sx={{
               rotate: "-25deg",
-              backgroundColor: colorPalette(0.4).CP5,
-              color: "white",
+              background: "linear-gradient(135deg, #5eead4 0%, #38bdf8 100%)",
+              color: "#041019",
               marginLeft: "1rem",
               padding: "0.5rem",
               "&:hover": {
-                backgroundColor: `${colorPalette(0.8).CP3}`
+                background: "linear-gradient(135deg, #99f6e4 0%, #67e8f9 100%)",
               }
             }}
           >

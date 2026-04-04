@@ -2,6 +2,7 @@ import {keyframes, LinearProgress, Paper as PaperComponent, Skeleton, styled} fr
 import {Link as LinkComponent} from "react-router-dom";
 import {colorPalette, cursorHoveringChatName} from "../../constants/color.constant.js";
 import {adminTheme} from "../../constants/adminTheme.constant.js";
+import {userTheme} from "../../constants/userTheme.constant.js";
 
 
 export const VisuallyHiddenInput = styled('input')({
@@ -34,11 +35,13 @@ export const InputBox = styled('input')`
   width: 100%;
   height: 100%;
   padding: 0 3rem;
-  border: none;
+  border: 1px solid ${userTheme.border};
   outline: none;
-  border-radius: 1.5rem;
+  border-radius: 1rem;
   box-sizing: border-box;
-  background-color: ${colorPalette(0.2).CP5};
+  background: rgba(8, 15, 25, 0.92);
+  color: ${userTheme.text};
+  backdrop-filter: blur(10px);
 `;
 
 export const SearchField = styled('input')`
