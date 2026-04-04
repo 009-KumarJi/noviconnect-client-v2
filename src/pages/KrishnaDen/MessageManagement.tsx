@@ -8,6 +8,7 @@ import RenderAttachment from "../../components/shared/RenderAttachment.jsx";
 import {useAllMessagesQuery} from "../../redux/api/adminApiSlice.js";
 import {useErrors} from "../../hooks/hook.jsx";
 import {sout} from "../../utils/helper.js";
+import {adminTheme} from "../../constants/adminTheme.constant.js";
 
 
 const columns = [
@@ -21,7 +22,13 @@ const columns = [
           const url = i.url;
           const file = fileFormat(url);
           return <Box>
-            <a href={url} target="_blank" rel="noreferrer" download={true} style={{color: "black"}}>
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              download={true}
+              style={{color: adminTheme.accent}}
+            >
               {RenderAttachment(file, 50)}
             </a>
           </Box>
