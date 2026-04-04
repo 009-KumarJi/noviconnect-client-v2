@@ -17,6 +17,8 @@ import {resetNewMessagesAlert} from "../redux/reducers/chatSlice.js";
 import {TypingLoader} from "../components/layout/Loaders.jsx";
 import {useNavigate} from "react-router-dom";
 import {userTheme} from "../constants/userTheme.constant.js";
+import {decryptMessageContent, encryptTextMessage} from "../lib/e2ee";
+import toast from "react-hot-toast";
 
 
 const Chat = ({ChatId, user}) => {
@@ -38,7 +40,7 @@ const Chat = ({ChatId, user}) => {
   const [messages, setMessages] = useState([]);
   const [fileMenuAnchor, setFileMenuAnchor] = useState(null);
 
-  const chatDetails = useChatDetailsQuery({ChatId, skip: !ChatId});
+  const chatDetails = useChatDetailsQuery({ChatId, populate: true}, {skip: !ChatId});
   const members = chatDetails?.data?.chat?.members;
 
   const prevMessagesChunk = useGetMessagesQuery({ChatId, page});
@@ -52,8 +54,7 @@ const Chat = ({ChatId, user}) => {
     containerRef,
     prevMessagesChunk.data?.totalPages,
     page,
-    setPage,
-    prevMessagesChunk.data?.messages
+    setPage
   );
 
   const messageOnChangeHandler = (e) => {
@@ -81,9 +82,24 @@ const Chat = ({ChatId, user}) => {
   const handleSubmit = (event) => {
     event.preventDefault();
     if (!messageTyped.trim()) return;
-    // emitting message to server
-    socket.emit(NEW_MESSAGE, {ChatId, members, message: messageTyped});
-    setMessageTyped("");
+    if (!members?.length) {
+      toast.error("Secure chat is still loading. Please try again in a moment.");
+      return;
+    }
+
+    (async () => {
+      try {
+        const encryptedMessage = await encryptTextMessage({
+          text: messageTyped,
+          members: members || [],
+        });
+
+        socket.emit(NEW_MESSAGE, {ChatId, members, message: encryptedMessage});
+        setMessageTyped("");
+      } catch (error: any) {
+        toast.error(error?.message || "Unable to send secure message right now.");
+      }
+    })();
   }
 
   useEffect(() => {
@@ -111,10 +127,26 @@ const Chat = ({ChatId, user}) => {
     if (chatDetails.isError) return navigate("/");
   }, [chatDetails.isError]);
 
+  useEffect(() => {
+    if (!prevMessagesChunk.data?.messages?.length || !user?._id) return;
+
+    (async () => {
+      const decryptedMessages = await Promise.all(
+        prevMessagesChunk.data.messages.map((message) => decryptMessageContent({message, userId: user._id}))
+      );
+
+      setPrevMessages((prev) => [...prev, ...decryptedMessages]);
+    })();
+  }, [prevMessagesChunk.data?.messages, setPrevMessages, user?._id]);
+
   const newMessagesListener = useCallback((data) => {
     if (data.ChatId !== ChatId) return;
-    setMessages(prevState => prevState.concat(data.message))
-  }, [ChatId]);
+
+    (async () => {
+      const decryptedMessage = await decryptMessageContent({message: data.message, userId: user._id});
+      setMessages(prevState => prevState.concat(decryptedMessage))
+    })();
+  }, [ChatId, user?._id]);
 
   const startTypingListener = useCallback((data) => {
     if (data.ChatId !== ChatId) return;

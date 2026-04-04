@@ -8,6 +8,7 @@ import {server} from "./constants/config.constant";
 import {userDoesNotExist, userExists} from "./redux/reducers/authSlice";
 import {Toaster} from "react-hot-toast";
 import {SocketProvider} from "./socket";
+import {ensureUserEncryptionSetup} from "./lib/e2ee";
 
 const Login = lazy(() => import("./pages/Login"));
 const SignUpForm = lazy(() => import("./pages/SignUp"));
@@ -34,6 +35,16 @@ const App = () => {
       .then(({data}) => dispatch(userExists(data.user)))
       .catch((err) => dispatch(userDoesNotExist()));
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!user?._id) return;
+
+    ensureUserEncryptionSetup({user, server})
+      .then((updatedUser) => {
+        if (updatedUser) dispatch(userExists(updatedUser));
+      })
+      .catch(() => null);
+  }, [dispatch, user?._id]);
 
 
   return isLoading ? <LayoutLoader/> : (
