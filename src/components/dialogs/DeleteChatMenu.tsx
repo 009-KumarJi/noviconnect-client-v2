@@ -6,6 +6,7 @@ import {ExitToApp as LeaveGroupIcon, PersonRemove as FriendRemoveIcon} from "@mu
 import {useNavigate} from "react-router-dom";
 import {useAsyncMutation} from "../../hooks/hook.jsx";
 import {useDeleteGroupChatMutation, useLeaveGroupMutation} from "../../redux/api/apiSlice.js";
+import {userTheme} from "../../constants/userTheme.constant.js";
 
 const DeleteChatMenu = ({dispatch, deleteMenuAnchor}) => {
   const navigate = useNavigate();
@@ -46,37 +47,45 @@ const DeleteChatMenu = ({dispatch, deleteMenuAnchor}) => {
         horizontal: "center",
       }}
       sx={{
-        transition: "background-color 0.3s ease",
         "& .MuiMenu-paper": {
-          borderRadius: "3rem",
-          "&:hover": {
-            backgroundColor: "rgb(255,240,240)"
-          },
+          borderRadius: "1.4rem",
+          marginTop: "0.35rem",
+          background: "linear-gradient(180deg, rgba(16, 27, 44, 0.98) 0%, rgba(10, 18, 30, 0.98) 100%)",
+          border: `1px solid ${userTheme.border}`,
+          boxShadow: "0 18px 40px rgba(2, 8, 23, 0.38)",
+          overflow: "hidden",
         }
       }}
     >
       <Stack
         sx={{
-          width: "11rem",
-          padding: "1rem",
+          minWidth: "12.5rem",
+          padding: "0.9rem 1rem",
           cursor: "pointer",
-          color: "maroon",
+          color: userTheme.danger,
+          transition: "background-color 0.2s ease, color 0.2s ease",
+          "&:hover": {
+            backgroundColor: "rgba(251, 113, 133, 0.1)",
+            color: "#fecdd3",
+          },
         }}
         direction={"row"}
         alignItems={"center"}
-        spacing={"0.5rem"}
+        spacing={"0.7rem"}
         onClick={selectedDeleteChat?.groupChat ? leaveGroupHandler : removeFriendHandler}
       >
         {
           selectedDeleteChat?.groupChat
             ? (
               <>
-                <LeaveGroupIcon/><Typography>Leave Group</Typography>
+                <LeaveGroupIcon/>
+                <Typography sx={{fontWeight: 600}}>Leave Group</Typography>
               </>
             )
             : (
               <>
-                <FriendRemoveIcon/><Typography>Remove Friend</Typography>
+                <FriendRemoveIcon/>
+                <Typography sx={{fontWeight: 600}}>Remove Friend</Typography>
               </>
             )
         }
