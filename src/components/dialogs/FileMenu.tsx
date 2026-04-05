@@ -85,12 +85,45 @@ const FileMenu = ({anchorE1, ChatId}) => {
   };
 
   return (
-    <Menu open={isFileMenu} anchorEl={anchorE1} onClose={handleClose}>
+    <Menu
+      open={isFileMenu}
+      anchorEl={anchorE1}
+      onClose={handleClose}
+      PaperProps={{
+        sx: {
+          mt: 1,
+          borderRadius: "1.1rem",
+          minWidth: "12rem",
+          background: "linear-gradient(180deg, rgba(16, 27, 44, 0.98) 0%, rgba(10, 18, 30, 0.98) 100%)",
+          border: "1px solid rgba(148, 163, 184, 0.16)",
+          boxShadow: "0 18px 40px rgba(2, 8, 23, 0.38)",
+          color: "#edf6ff",
+        },
+      }}
+      MenuListProps={{
+        sx: {
+          py: 0.8,
+        },
+      }}
+    >
       <Box sx={{
-        width: "10rem"
+        width: "12rem"
       }}>
         <MenuList>
-          <MenuItem onClick={() => selectRef(imageRef)}>
+          <MenuItem
+            onClick={() => selectRef(imageRef)}
+            sx={{
+              py: 1.1,
+              px: 1.4,
+              borderRadius: "0.9rem",
+              mx: 0.7,
+              my: 0.2,
+              color: "#edf6ff",
+              "&:hover": {
+                backgroundColor: "rgba(94, 234, 212, 0.12)",
+              },
+            }}
+          >
             <ImageIcon sx={{
               color: paleBlueOpaque,
               fontSize: "1.5rem"
@@ -105,7 +138,20 @@ const FileMenu = ({anchorE1, ChatId}) => {
               ref={imageRef}
             />
           </MenuItem>
-          <MenuItem onClick={() => selectRef(audioRef)}>
+          <MenuItem
+            onClick={() => selectRef(audioRef)}
+            sx={{
+              py: 1.1,
+              px: 1.4,
+              borderRadius: "0.9rem",
+              mx: 0.7,
+              my: 0.2,
+              color: "#edf6ff",
+              "&:hover": {
+                backgroundColor: "rgba(94, 234, 212, 0.12)",
+              },
+            }}
+          >
             <AudioIcon sx={{
               color: paleBlueOpaque,
               fontSize: "1.5rem"
@@ -120,7 +166,20 @@ const FileMenu = ({anchorE1, ChatId}) => {
               ref={audioRef}
             />
           </MenuItem>
-          <MenuItem onClick={() => selectRef(videoRef)}>
+          <MenuItem
+            onClick={() => selectRef(videoRef)}
+            sx={{
+              py: 1.1,
+              px: 1.4,
+              borderRadius: "0.9rem",
+              mx: 0.7,
+              my: 0.2,
+              color: "#edf6ff",
+              "&:hover": {
+                backgroundColor: "rgba(94, 234, 212, 0.12)",
+              },
+            }}
+          >
             <VideoIcon sx={{
               color: paleBlueOpaque,
               fontSize: "1.5rem"
@@ -135,7 +194,20 @@ const FileMenu = ({anchorE1, ChatId}) => {
               ref={videoRef}
             />
           </MenuItem>
-          <MenuItem onClick={() => selectRef(documentRef)}>
+          <MenuItem
+            onClick={() => selectRef(documentRef)}
+            sx={{
+              py: 1.1,
+              px: 1.4,
+              borderRadius: "0.9rem",
+              mx: 0.7,
+              my: 0.2,
+              color: "#edf6ff",
+              "&:hover": {
+                backgroundColor: "rgba(94, 234, 212, 0.12)",
+              },
+            }}
+          >
             <DocumentIcon sx={{
               color: paleBlueOpaque,
               fontSize: "1.5rem"

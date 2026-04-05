@@ -34,7 +34,7 @@ export const Link = styled(LinkComponent)`
 export const InputBox = styled('input')`
   width: 100%;
   height: 100%;
-  padding: 0 3rem;
+  padding: 0 3rem 0 4.7rem;
   border: 1px solid ${userTheme.border};
   outline: none;
   border-radius: 1rem;
@@ -42,6 +42,17 @@ export const InputBox = styled('input')`
   background: rgba(8, 15, 25, 0.92);
   color: ${userTheme.text};
   backdrop-filter: blur(10px);
+  font-size: 1rem;
+
+  &::placeholder {
+    color: ${userTheme.textMuted};
+    opacity: 0.8;
+  }
+
+  &:focus {
+    border-color: ${userTheme.borderStrong};
+    box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.12);
+  }
 `;
 
 export const SearchField = styled('input')`

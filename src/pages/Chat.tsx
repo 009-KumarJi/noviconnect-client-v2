@@ -287,13 +287,15 @@ const Chat = ({ChatId, user}) => {
           <IconButton
             sx={{
               position: "absolute",
-              left: "1.5rem",
+              left: "1.9rem",
               top: "50%",
               transform: "translateY(-50%)",
               rotate: "20deg",
               color: userTheme.textMuted,
               zIndex: 2,
-              backgroundColor: "rgba(8, 15, 25, 0.72)",
+              width: "2.4rem",
+              height: "2.4rem",
+              backgroundColor: "rgba(11, 21, 34, 0.78)",
               border: `1px solid ${userTheme.border}`,
               "&:hover": {
                 backgroundColor: userTheme.accentSoft,
