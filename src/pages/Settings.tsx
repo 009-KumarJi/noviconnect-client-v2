@@ -195,7 +195,7 @@ const Settings = () => {
             <Typography variant="h3" sx={{fontWeight: 700, color: userTheme.text, mb: 3}}>
               Manage your profile
             </Typography>
-            <Stack direction={{xs: "column", md: "row"}} spacing={3} alignItems={{xs: "flex-start", md: "center"}}>
+            <Stack direction={{xs: "column", lg: "row"}} spacing={3} alignItems={{xs: "flex-start", lg: "center"}}>
               <Stack spacing={1} alignItems="center">
                 <Avatar src={avatarPreview} sx={{width: 112, height: 112, border: `3px solid ${userTheme.borderStrong}`}} />
                 <Button component="label" sx={{color: userTheme.accent}}>
@@ -224,8 +224,10 @@ const Settings = () => {
 
           <Paper sx={settingsCardSx}>
             <Typography variant="h5" sx={{fontWeight: 700, color: userTheme.text, mb: 2}}>Change Email</Typography>
-            <Stack direction={{xs: "column", md: "row"}} spacing={2}>
-              <TextField fullWidth label="Email" value={email} onChange={(e) => setEmail(e.target.value)} sx={settingsFieldSx} />
+            <Stack direction={{xs: "column", lg: "row"}} spacing={2} alignItems={{xs: "stretch", lg: "center"}}>
+              <Box sx={{flex: 1}}>
+                <TextField fullWidth label="Email" value={email} onChange={(e) => setEmail(e.target.value)} sx={settingsFieldSx} />
+              </Box>
               <Button onClick={updateEmail} disabled={isLoading} sx={settingsButtonSx}>Update Email</Button>
             </Stack>
           </Paper>
@@ -269,7 +271,7 @@ const Settings = () => {
               )}
               <TextField label="Recovery Key" value={recoveryKey} onChange={(e) => setRecoveryKey(e.target.value.toUpperCase())} sx={settingsFieldSx} />
               <TextField label="Current Account Password" type="password" value={recoveryPassword} onChange={(e) => setRecoveryPassword(e.target.value)} sx={settingsFieldSx} />
-              <Stack direction={{xs: "column", md: "row"}} spacing={1.5}>
+              <Stack direction={{xs: "column", lg: "row"}} spacing={1.5}>
                 <Button onClick={restoreWithRecoveryKey} disabled={isLoading} sx={settingsButtonSx}>Restore with Recovery Key</Button>
                 <Button onClick={regenerateKey} disabled={isLoading} sx={{...settingsButtonSx, background: "rgba(56, 189, 248, 0.16)", color: userTheme.accentBlue, border: `1px solid ${userTheme.borderStrong}`}}>
                   Regenerate Recovery Key
@@ -319,10 +321,13 @@ const settingsFieldSx = {
 
 const settingsButtonSx = {
   alignSelf: "flex-start",
+  width: {xs: "100%", lg: "auto"},
+  minWidth: {lg: "11rem"},
   borderRadius: "999px",
   px: 2.5,
   py: 1.2,
   fontWeight: 700,
+  whiteSpace: "nowrap",
   background: "linear-gradient(135deg, #5eead4 0%, #38bdf8 100%)",
   color: "#041019",
 };

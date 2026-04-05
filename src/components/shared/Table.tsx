@@ -38,6 +38,7 @@ const Table = ({rows, columns, heading, rowHeight = 52}) => {
           rows={rows}
           columns={columns}
           rowHeight={rowHeight}
+          disableRowSelectionOnClick
           style={{
             height: "80%",
             scrollbarWidth: "thin",
@@ -57,6 +58,15 @@ const Table = ({rows, columns, heading, rowHeight = 52}) => {
             },
             "& .MuiDataGrid-row:hover": {
               backgroundColor: "rgba(34, 211, 238, 0.06)",
+            },
+            "& .MuiDataGrid-row.Mui-selected": {
+              backgroundColor: "rgba(34, 211, 238, 0.1)",
+            },
+            "& .MuiDataGrid-row.Mui-selected:hover": {
+              backgroundColor: "rgba(34, 211, 238, 0.14)",
+            },
+            "& .MuiDataGrid-row.Mui-selected .MuiDataGrid-cell": {
+              color: adminTheme.text,
             },
             "& .MuiDataGrid-footerContainer": {
               borderTop: `1px solid ${adminTheme.border}`,

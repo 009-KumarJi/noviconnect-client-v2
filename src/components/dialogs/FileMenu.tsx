@@ -29,42 +29,60 @@ const FileMenu = ({anchorE1, ChatId}) => {
   const members = chatDetails?.data?.chat?.members || [];
   const selectRef = (ref) => ref.current?.click();
   const handleClose = () => dispatch(setIsFileMenu(false));
+  const getUploadErrorMessage = (error) =>
+    error?.data?.message ||
+    error?.error ||
+    error?.message ||
+    "Unable to send attachments right now.";
+
   const handleFileOpen = async (e, key) => {
-    const files = Array.from(e.target.files);
+    const input = e.target;
+    const files = Array.from(input.files || []);
+
     if (files.length <= 0) return;
-    if (files.length > 5) return toast.error(`You can upload at most 5 ${key} at a time!`);
+    if (files.length > 5) {
+      input.value = "";
+      return toast.error(`You can upload at most 5 ${key} at a time!`);
+    }
+    if (!ChatId) {
+      input.value = "";
+      return toast.error("Open a chat before sending attachments.");
+    }
+    if (isE2EEEnabled && !members.length) {
+      input.value = "";
+      return toast.error("Secure chat members are still loading. Please try again in a moment.");
+    }
+    if (isE2EEEnabled && members.some((member) => !member?.encryptionPublicKey)) {
+      input.value = "";
+      return toast.error("One or more chat members have not finished secure-message setup yet.");
+    }
 
     dispatch(setUploadingLoader(true));
-    const toastId = toast.loading(`Uploading ${files.length} ${files.length === 1 ? key.slice(0, key.length - 1) : key}...`);
-    // fetch the files and upload them to the server
+    const label = files.length === 1 ? key.slice(0, key.length - 1) : key;
+    const toastId = toast.loading(`Uploading ${files.length} ${label}...`);
+
     try {
       const formData = new FormData();
       formData.append("ChatId", ChatId);
+
       if (isE2EEEnabled) {
         const encryptedFiles = await encryptAttachmentsForUpload({files, members});
         encryptedFiles.forEach(({file}) => formData.append("files", file));
         formData.append("attachmentMetadata", JSON.stringify(encryptedFiles.map(({metadata}) => metadata)));
       } else {
-        files.forEach(file => formData.append("files", file));
+        files.forEach((file) => formData.append("files", file));
       }
-      const res = await sendAttachments(formData);
-      res.data
-        ? toast.success(`${files.length === 1 ? key.slice(0, key.length - 1) : key} sent successfully!!!`, {
-          id: toastId,
-          icon: "🚀"
-        })
-        : toast.error(`Failed to send ${files.length === 1 ? key.slice(0, key.length - 1) : key}...`, {
-          id: toastId,
-          icon: "❌"
-        });
+
+      await sendAttachments(formData).unwrap();
+      toast.success(`${label} sent successfully!`, {id: toastId});
     } catch (error) {
-      toast(error.message, {id: toastId, icon: "❌"})
+      toast.error(getUploadErrorMessage(error), {id: toastId});
     } finally {
+      input.value = "";
       dispatch(setUploadingLoader(false));
       dispatch(setIsFileMenu(false));
     }
-
-  }
+  };
 
   return (
     <Menu open={isFileMenu} anchorEl={anchorE1} onClose={handleClose}>

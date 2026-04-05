@@ -1,35 +1,55 @@
 import React from 'react';
-import {Grid, Skeleton, Stack} from "@mui/material";
+import {Box, Grid, Skeleton, Stack} from "@mui/material";
 import {BouncingSkeleton} from "../styles/StyledComponents.jsx";
+import {userTheme} from "../../constants/userTheme.constant.js";
+
+const loaderSkeletonSx = {
+  bgcolor: "rgba(16, 27, 44, 0.88)",
+  border: `1px solid ${userTheme.border}`,
+  "&::after": {
+    background: "linear-gradient(90deg, transparent, rgba(94, 234, 212, 0.1), transparent)",
+  },
+};
 
 const LayoutLoader = () => {
-  return <Grid container height={"calc(100vh - 4rem)"} spacing={"1rem"}>
-    <Grid size={{ sm: 4, md: 3 }} height={"100%"} sx={{
-      display: {xs: "none", sm: "block"}
-    }}
+  return (
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: userTheme.gradient,
+        px: {xs: 1, md: 2},
+        py: {xs: 1.5, md: 2},
+      }}
     >
-      <Skeleton variant="rectangular" height={"100vh"}/>
-    </Grid>
-    <Grid size={{ xs: 12, sm: 8, md: 5, lg: 6 }} height={"100%"}>
-      <Stack spacing={"1rem"}>
-        {
-          Array
-            .from({length: 12})
-            .map((_, index) =>
-              <Skeleton key={index} variant="rounded" height={"5rem "}/>
-            )
-        }
-      </Stack>
-    </Grid>
+      <Grid container height={"calc(100vh - 4rem)"} spacing={"1rem"}>
+        <Grid size={{sm: 4, md: 3}} height={"100%"} sx={{
+          display: {xs: "none", sm: "block"}
+        }}
+        >
+          <Skeleton variant="rectangular" height={"100vh"} sx={loaderSkeletonSx}/>
+        </Grid>
+        <Grid size={{xs: 12, sm: 8, md: 5, lg: 6}} height={"100%"}>
+          <Stack spacing={"1rem"}>
+            {
+              Array
+                .from({length: 12})
+                .map((_, index) =>
+                  <Skeleton key={index} variant="rounded" height={"5rem"} sx={loaderSkeletonSx}/>
+                )
+            }
+          </Stack>
+        </Grid>
 
 
-    <Grid size={{ md: 4, lg: 3 }} height={"100%"} sx={{
-      display: {xs: "none", md: "block"},
-    }}
-    >
-      <Skeleton variant="rectangular" height={"100vh"}/>
-    </Grid>
-  </Grid>;
+        <Grid size={{md: 4, lg: 3}} height={"100%"} sx={{
+          display: {xs: "none", md: "block"},
+        }}
+        >
+          <Skeleton variant="rectangular" height={"100vh"} sx={loaderSkeletonSx}/>
+        </Grid>
+      </Grid>
+    </Box>
+  );
 };
 
 const TypingLoader = () => {
