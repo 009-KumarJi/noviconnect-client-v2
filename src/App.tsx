@@ -2,6 +2,7 @@ import React, {lazy, Suspense, useEffect} from 'react';
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import ProtectRoute from "./components/auth/ProtectRoute";
 import {LayoutLoader} from "./components/layout/Loaders";
+import Title from "./components/shared/Title";
 import {useDispatch, useSelector} from "react-redux";
 import axios from "axios";
 import {isE2EEEnabled, server} from "./constants/config.constant";
@@ -46,6 +47,7 @@ const App = () => {
 
   return isLoading ? <LayoutLoader/> : (
     <BrowserRouter>
+      <Title/>
       <Suspense fallback={<LayoutLoader/>}>
         <Routes>
           <Route element={<SocketProvider><ProtectRoute user={user}/></SocketProvider>}>

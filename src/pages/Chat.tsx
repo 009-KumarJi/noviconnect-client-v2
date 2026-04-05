@@ -288,8 +288,17 @@ const Chat = ({ChatId, user}) => {
             sx={{
               position: "absolute",
               left: "1.5rem",
+              top: "50%",
+              transform: "translateY(-50%)",
               rotate: "20deg",
               color: userTheme.textMuted,
+              zIndex: 2,
+              backgroundColor: "rgba(8, 15, 25, 0.72)",
+              border: `1px solid ${userTheme.border}`,
+              "&:hover": {
+                backgroundColor: userTheme.accentSoft,
+                color: userTheme.text,
+              }
             }}
             onClick={handleFileOpen}
           >
