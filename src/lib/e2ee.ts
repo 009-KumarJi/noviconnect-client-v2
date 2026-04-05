@@ -221,6 +221,10 @@ const createEncryptedEnvelope = async ({
   data: ArrayBuffer;
   members: Array<{_id: string; encryptionPublicKey?: string}>;
 }) => {
+  if (!members.length) {
+    throw new Error("Secure chat members are still loading. Please try again in a moment.");
+  }
+
   const unavailableMember = members.find((member) => !member.encryptionPublicKey);
   if (unavailableMember) {
     throw new Error("One or more chat members have not finished secure-message setup yet.");

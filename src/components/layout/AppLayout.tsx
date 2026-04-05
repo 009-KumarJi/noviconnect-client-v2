@@ -110,7 +110,7 @@ const AppLayout = () => (WrappedComponent) => {
     }, [socket, user]);
 
     return (
-      <Box sx={{minHeight: "100vh", background: userTheme.gradient}}>
+      <Box sx={{height: "100vh", overflow: "hidden", background: userTheme.gradient}}>
         <Title/>
         <Header/>
         <DeleteChatMenu dispatch={dispatch} deleteMenuAnchor={deleteMenuAnchor}/>
@@ -139,6 +139,8 @@ const AppLayout = () => (WrappedComponent) => {
               display: {xs: "none", sm: "block"},
               borderRight: `1px solid ${userTheme.border}`,
               backgroundColor: "rgba(8, 15, 25, 0.8)",
+              overflowY: "auto",
+              minHeight: 0,
             }}
             height={"100%"}
           >
@@ -156,7 +158,11 @@ const AppLayout = () => (WrappedComponent) => {
           </Grid>
           <Grid
             size={{ xs: 12, sm: 8, md: 5, lg: 6 }}
-            sx={{backgroundColor: "rgba(6, 13, 22, 0.72)"}}
+            sx={{
+              backgroundColor: "rgba(6, 13, 22, 0.72)",
+              overflowY: "auto",
+              minHeight: 0,
+            }}
             height={"100%"}
           >
             <WrappedComponent {...props} ChatId={ChatId} user={user}/>
@@ -170,6 +176,8 @@ const AppLayout = () => (WrappedComponent) => {
               padding: "2rem",
               bgcolor: "rgba(9, 17, 28, 0.9)",
               borderLeft: `1px solid ${userTheme.border}`,
+              overflowY: "auto",
+              minHeight: 0,
             }}
             height={"100%"}
           >
