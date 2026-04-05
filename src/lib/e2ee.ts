@@ -10,6 +10,9 @@ const KEY_ALGORITHM = {
 const WRAP_ALGORITHM = {name: "AES-GCM", length: 256} as const;
 const KDF_ITERATIONS = 250000;
 const pendingRecoveryKeyStorageKey = "noviconnect:e2ee:pending-recovery-key";
+const identityDatabaseName = "noviconnect-e2ee";
+const identityStoreName = "identities";
+const privateKeyFallbackStorageKey = (userId: string) => `noviconnect:e2ee:private-fallback:${userId}`;
 
 const privateKeyStorageKey = (userId: string) => `noviconnect:e2ee:private:${userId}`;
 const publicKeyStorageKey = (userId: string) => `noviconnect:e2ee:public:${userId}`;
@@ -76,8 +79,94 @@ const deriveWrapKey = async ({
   );
 };
 
+const openIdentityDatabase = () =>
+  new Promise<IDBDatabase>((resolve, reject) => {
+    if (typeof indexedDB === "undefined") {
+      reject(new Error("IndexedDB is unavailable in this browser."));
+      return;
+    }
+
+    const request = indexedDB.open(identityDatabaseName, 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(identityStoreName)) {
+        db.createObjectStore(identityStoreName, {keyPath: "userId"});
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error("Failed to open secure identity storage."));
+  });
+
+const readIdentityRecord = async (userId: string) => {
+  try {
+    const db = await openIdentityDatabase();
+    return await new Promise<any>((resolve, reject) => {
+      const transaction = db.transaction(identityStoreName, "readonly");
+      const store = transaction.objectStore(identityStoreName);
+      const request = store.get(userId);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error || new Error("Failed to read secure identity."));
+      transaction.oncomplete = () => db.close();
+    });
+  } catch {
+    return null;
+  }
+};
+
+const writeIdentityRecord = async ({
+  userId,
+  privateKey,
+  publicKey,
+}: {
+  userId: string;
+  privateKey: string;
+  publicKey: string;
+}) => {
+  try {
+    const db = await openIdentityDatabase();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(identityStoreName, "readwrite");
+      const store = transaction.objectStore(identityStoreName);
+      store.put({
+        userId,
+        privateKey,
+        publicKey,
+        updatedAt: Date.now(),
+      });
+      transaction.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      transaction.onerror = () => reject(transaction.error || new Error("Failed to save secure identity."));
+    });
+
+    localStorage.removeItem(privateKeyFallbackStorageKey(userId));
+  } catch {
+    localStorage.setItem(privateKeyFallbackStorageKey(userId), privateKey);
+  }
+};
+
+const deleteIdentityRecord = async (userId: string) => {
+  try {
+    const db = await openIdentityDatabase();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(identityStoreName, "readwrite");
+      const store = transaction.objectStore(identityStoreName);
+      store.delete(userId);
+      transaction.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      transaction.onerror = () => reject(transaction.error || new Error("Failed to delete secure identity."));
+    });
+  } catch {
+    // Ignore IndexedDB cleanup failures and continue with fallback cleanup.
+  }
+};
+
 const loadLocalIdentity = async (userId: string) => {
-  const privateKey = localStorage.getItem(privateKeyStorageKey(userId));
+  const storedRecord = await readIdentityRecord(userId);
+  const privateKey = storedRecord?.privateKey || localStorage.getItem(privateKeyFallbackStorageKey(userId));
   const publicKey = localStorage.getItem(publicKeyStorageKey(userId));
 
   if (!privateKey || !publicKey) return null;
@@ -85,8 +174,8 @@ const loadLocalIdentity = async (userId: string) => {
   return {privateKey, publicKey};
 };
 
-const storeLocalIdentity = ({userId, privateKey, publicKey}: {userId: string; privateKey: string; publicKey: string}) => {
-  localStorage.setItem(privateKeyStorageKey(userId), privateKey);
+const storeLocalIdentity = async ({userId, privateKey, publicKey}: {userId: string; privateKey: string; publicKey: string}) => {
+  await writeIdentityRecord({userId, privateKey, publicKey});
   localStorage.setItem(publicKeyStorageKey(userId), publicKey);
 };
 
@@ -114,7 +203,7 @@ const createAndStoreLocalIdentity = async (userId: string) => {
     exportPrivateKey(keyPair.privateKey),
   ]);
 
-  storeLocalIdentity({userId, privateKey, publicKey});
+  await storeLocalIdentity({userId, privateKey, publicKey});
 
   return {privateKey, publicKey};
 };
@@ -326,7 +415,7 @@ export const ensureUserEncryptionSetup = async ({
         password,
       });
 
-      storeLocalIdentity({
+      await storeLocalIdentity({
         userId: user._id,
         privateKey,
         publicKey: bundle.encryptionPublicKey,
@@ -395,7 +484,7 @@ export const rewrapEncryptionBundle = async ({
       publicKey: bundle.encryptionPublicKey,
     };
 
-    storeLocalIdentity({userId, ...identity});
+    await storeLocalIdentity({userId, ...identity});
   }
 
   await saveEncryptionBundle({
@@ -408,7 +497,8 @@ export const rewrapEncryptionBundle = async ({
 
 export const clearEncryptionIdentity = (userId?: string) => {
   if (!userId) return;
-  localStorage.removeItem(privateKeyStorageKey(userId));
+  deleteIdentityRecord(userId);
+  localStorage.removeItem(privateKeyFallbackStorageKey(userId));
   localStorage.removeItem(publicKeyStorageKey(userId));
 };
 
@@ -441,7 +531,7 @@ export const restoreEncryptionWithRecoveryKey = async ({
     password: recoveryKey,
   });
 
-  storeLocalIdentity({
+  await storeLocalIdentity({
     userId,
     privateKey,
     publicKey: bundle.encryptionPublicKey,

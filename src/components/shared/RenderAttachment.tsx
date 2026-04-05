@@ -66,16 +66,23 @@ const RenderAttachment = ({attachment, userId}) => {
 
   switch (file) {
     case "video":
-      return <a href={url} target="_blank" download={resolvedAttachment.originalName || true}><video src={url} preload="metadata" width="200px" controls={true}/></a>;
+      return <a href={url} target="_blank" rel="noreferrer" download={resolvedAttachment.originalName || true}><video src={url} preload="metadata" width="200px" controls={true}/></a>;
     case "image":
-      return <a href={url} target="_blank" download={resolvedAttachment.originalName || true}><img src={url} alt={resolvedAttachment.originalName || "attachment"} width="200px" height="150px"
+      return <a href={url} target="_blank" rel="noreferrer" download={resolvedAttachment.originalName || true}><img src={url} alt={resolvedAttachment.originalName || "attachment"} width="200px" height="150px"
                   style={{objectFit: "contain"}}/></a>;
     case "audio":
-      return <a href={url} target="_blank" download={resolvedAttachment.originalName || true}><audio src={url} preload="metadata" controls={true}/></a>;
+      return <a href={url} target="_blank" rel="noreferrer" download={resolvedAttachment.originalName || true}><audio src={url} preload="metadata" controls={true}/></a>;
     case "document":
-      return <a href={url} target="_blank" download={resolvedAttachment.originalName || true}><iframe src={url} width="200px" height="150px"/></a>;
+      return (
+        <a href={url} target="_blank" rel="noreferrer" download={resolvedAttachment.originalName || true} style={{color: userTheme.accent}}>
+          <Box sx={{display: "flex", alignItems: "center", gap: 0.5}}>
+            <FileOpenIcon/>
+            <span>{resolvedAttachment.originalName || "Open document safely"}</span>
+          </Box>
+        </a>
+      );
     default:
-      return <a href={url} target="_blank" download={resolvedAttachment.originalName || true} style={{color: userTheme.accent}}><Box sx={{display: "flex", alignItems: "center", gap: 0.5}}><FileOpenIcon/><span>{resolvedAttachment.originalName || "File"}</span></Box></a>;
+      return <a href={url} target="_blank" rel="noreferrer" download={resolvedAttachment.originalName || true} style={{color: userTheme.accent}}><Box sx={{display: "flex", alignItems: "center", gap: 0.5}}><FileOpenIcon/><span>{resolvedAttachment.originalName || "File"}</span></Box></a>;
   }
 };
 

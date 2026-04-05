@@ -61,14 +61,14 @@ const Chat = ({ChatId, user}) => {
   const messageOnChangeHandler = (e) => {
     setMessageTyped(e.target.value);
     if (!iAmTyping) {
-      socket.emit(START_TYPING, {members, ChatId});
+      socket.emit(START_TYPING, {ChatId});
       setIAmTyping(true);
     }
 
     if (typingTimeout.current) clearTimeout(typingTimeout.current);
 
     typingTimeout.current = setTimeout(() => {
-      socket.emit(STOP_TYPING, {members, ChatId});
+      socket.emit(STOP_TYPING, {ChatId});
       setIAmTyping(false);
     }, [2000]);
   };
@@ -94,9 +94,9 @@ const Chat = ({ChatId, user}) => {
             members: members || [],
           });
 
-          socket.emit(NEW_MESSAGE, {ChatId, members, message: encryptedMessage});
+          socket.emit(NEW_MESSAGE, {ChatId, message: encryptedMessage});
         } else {
-          socket.emit(NEW_MESSAGE, {ChatId, members, message: messageTyped});
+          socket.emit(NEW_MESSAGE, {ChatId, message: messageTyped});
         }
         setMessageTyped("");
       } catch (error: any) {
@@ -142,7 +142,7 @@ const Chat = ({ChatId, user}) => {
 
   useEffect(() => {
     if (members?.length) {
-      socket.emit(CHAT_JOINED, {userId: user._id, members});
+      socket.emit(CHAT_JOINED, {ChatId});
     }
     dispatch(resetNewMessagesAlert(ChatId));
     syncReadState();
@@ -153,7 +153,7 @@ const Chat = ({ChatId, user}) => {
       setMessageTyped("");
       setPrevMessages([]);
       if (members?.length) {
-        socket.emit(CHAT_LEFT, {userId: user._id, members});
+        socket.emit(CHAT_LEFT, {ChatId});
       }
     }
   }, [ChatId, dispatch, members, setPrevMessages, socket, syncReadState, user?._id]);

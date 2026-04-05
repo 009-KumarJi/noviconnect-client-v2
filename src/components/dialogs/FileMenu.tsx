@@ -126,7 +126,7 @@ const FileMenu = ({anchorE1, ChatId}) => {
             <input
               type="file"
               multiple
-              accept="*"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain"
               style={{display: 'none'}}
               onChange={(e) => handleFileOpen(e, "documents")}
               ref={documentRef}
